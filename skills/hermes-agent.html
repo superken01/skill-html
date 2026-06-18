@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Hermes Agent 是 Nous Research 的開源 AI 代理框架。它可以在終端機、通訊平台與 IDE 中使用，透過工具呼叫操作檔案、執行命令、搜尋資料、管理記憶與技能。這份中文整理著重在日常使用與設定：profile、skills、tools、MCP、gateway、cron、memory，以及遇到問題時的排查方向。">
+  <title>Hermes Agent｜Skill HTML</title>
+  <link rel="stylesheet" href="../assets/style.css">
+  <script src="../assets/app.js" defer></script>
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="../index.html">Skill HTML</a>
+    <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav">選單</button>
+    <nav id="site-nav" class="site-nav">
+      <a href="../index.html">首頁</a>
+      <a href="codex.html">Codex</a>
+      <a href="kanban-codex-lane.html">Kanban Codex Lane</a>
+      <a href="autonomous-agent-workflows.html">自主代理</a>
+      <a href="hermes-agent.html">Hermes Agent</a>
+    </nav>
+  </header>
+  <main>
+    <section class="hero skill-hero">
+      <p class="eyebrow">Hermes 平台與設定</p>
+      <h1>Hermes Agent</h1>
+      <p class="subtitle">終端機、訊息平台與 IDE 可用的開源 AI 代理框架。</p>
+      <div class="tags"><span>Hermes</span><span>CLI</span><span>Profiles</span><span>Skills</span><span>MCP</span><span>Gateway</span></div>
+    </section>
+
+    <section class="content-grid">
+      <article class="panel span-2">
+        <h2>中文整理</h2>
+        <p>Hermes Agent 是 Nous Research 的開源 AI 代理框架。它可以在終端機、通訊平台與 IDE 中使用，透過工具呼叫操作檔案、執行命令、搜尋資料、管理記憶與技能。這份中文整理著重在日常使用與設定：profile、skills、tools、MCP、gateway、cron、memory，以及遇到問題時的排查方向。</p>
+      </article>
+      <aside class="panel source-card">
+        <h2>來源資訊</h2>
+        <dl>
+          <dt>Skill slug</dt><dd>hermes-agent</dd>
+          <dt>來源路徑</dt><dd>/Users/super/.hermes/hermes-agent/skills/autonomous-ai-agents/hermes-agent/SKILL.md</dd>
+          <dt>原始描述</dt><dd>Configure, extend, or contribute to Hermes Agent.</dd>
+          <dt>版本</dt><dd>2.1.0</dd>
+        </dl>
+      </aside>
+
+      <article class="panel">
+        <h2>何時使用</h2>
+        <ul><li>需要設定 Hermes CLI、模型、provider、tools、skills 或 profile。</li><li>要把 Hermes 接到 Telegram、Discord、Slack、Webhook、MCP server 或排程工作。</li><li>要了解 Hermes 如何保存記憶、載入技能、委派子代理，或如何擴充工具。</li></ul>
+      </article>
+      <article class="panel">
+        <h2>不建議使用情境</h2>
+        <ul><li>只是一般 repo 程式碼問題，且不涉及 Hermes 本身設定或平台能力。</li><li>需要最新權威資訊但本機 skill 可能過期；這時應優先查官方文件。</li></ul>
+      </article>
+      <article class="panel span-2">
+        <h2>建議流程</h2>
+        <ul><li>先確認 profile：不同 profile 有獨立 config、skills、sessions 與 memory。</li><li>檢查狀態：用 hermes doctor、hermes status、hermes config path 找設定與依賴問題。</li><li>設定模型與認證：用 hermes model 或 hermes auth add 管理 provider 與 credential。</li><li>管理工具與技能：用 hermes tools list、hermes skills list、hermes skills install 檢查可用能力。</li><li>整合外部系統：MCP 用 hermes mcp add/list/test；gateway 用 hermes gateway setup/run/install。</li><li>變更後重啟或 reset：工具、技能與部分設定通常要新 session 或 gateway restart 才生效。</li></ul>
+      </article>
+      <article class="panel span-2">
+        <h2>命令範例</h2>
+        <div class="commands"><article class="command-card"><h3>健康檢查</h3><pre><code>hermes doctor</code></pre></article><article class="command-card"><h3>查看目前設定檔路徑</h3><pre><code>hermes config path</code></pre></article><article class="command-card"><h3>切換或設定模型</h3><pre><code>hermes model</code></pre></article><article class="command-card"><h3>列出工具與技能</h3><pre><code>hermes tools list &amp;&amp; hermes skills list</code></pre></article><article class="command-card"><h3>測試 MCP server</h3><pre><code>hermes mcp list &amp;&amp; hermes mcp test &lt;name&gt;</code></pre></article></div>
+      </article>
+      <article class="panel span-2">
+        <h2>注意事項</h2>
+        <ul><li>官方文件 https://hermes-agent.nousresearch.com/docs 是最新權威來源；本機 skill 是常用流程摘要。</li><li>profile 很重要。dev、default、pm 等 profile 的資料夾不同，不要誤改別的 profile。</li><li>工具變更通常不會套用到已存在的對話，開新 session 或 reset 才能看到差異。</li></ul>
+      </article>
+    </section>
+
+  </main>
+  <footer class="site-footer">
+    <p>繁體中文整理版。最後產生：2026-06-18 19:34 UTC</p>
+  </footer>
+</body>
+</html>

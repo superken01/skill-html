@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Hermes skills 繁體中文 HTML 導覽">
+  <title>首頁｜Skill HTML</title>
+  <link rel="stylesheet" href="assets/style.css">
+  <script src="assets/app.js" defer></script>
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="index.html">Skill HTML</a>
+    <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav">選單</button>
+    <nav id="site-nav" class="site-nav">
+      <a href="index.html">首頁</a>
+      <a href="skills/codex.html">Codex</a>
+      <a href="skills/kanban-codex-lane.html">Kanban Codex Lane</a>
+      <a href="skills/autonomous-agent-workflows.html">自主代理</a>
+      <a href="skills/hermes-agent.html">Hermes Agent</a>
+    </nav>
+  </header>
+  <main>
+    <section class="hero">
+      <p class="eyebrow">Hermes Skills 繁體中文導覽</p>
+      <h1>技能說明 HTML 站</h1>
+      <p class="subtitle">把本機 Hermes skills 整理成好閱讀、可搜尋、手機友善的繁體中文頁面。內容不是英文原文直貼，而是整理用途、流程、注意事項與命令範例。</p>
+      <label class="search-box" for="skill-search">搜尋技能</label>
+      <input id="skill-search" type="search" placeholder="輸入 Codex、Kanban、Hermes、代理..." autocomplete="off">
+    </section>
+
+    <section class="skill-list" aria-label="技能列表">
+        <article class="skill-card" data-search="autonomous-agent-workflows 自主代理工作流 這個技能是一套多代理開發方法：先由主代理界定目標與完成定義，再把可獨立處理的子任務委派給其他代理或 CLI，最後由主代理整合、驗證、提交。它強調隔離、可觀測、可回復，而不是讓多個代理同時亂改同一個工作區。">
+          <p class="eyebrow">自主 AI 開發代理</p>
+          <h2><a href="skills/autonomous-agent-workflows.html">自主代理工作流</a></h2>
+          <p>用 Hermes、Codex、Claude Code、OpenCode 等代理拆分任務、平行執行與驗收。</p>
+          <div class="tags"><span>多代理</span><span>Hermes</span><span>Codex</span><span>Claude Code</span></div>
+          <p class="source-status">已連到本機來源</p>
+        </article>        <article class="skill-card" data-search="codex Codex CLI 開發代理 這個技能用來啟動與管理 Codex CLI，讓它在獨立工作目錄中完成明確的開發任務。重點不是把需求丟出去就放任不管，而是先界定範圍、提供必要上下文、要求測試與提交紀錄，再由 Ethan 檢查輸出與整合結果。">
+          <p class="eyebrow">自主 AI 開發代理</p>
+          <h2><a href="skills/codex.html">Codex CLI 開發代理</a></h2>
+          <p>把單一功能、修 bug、PR review 交給 OpenAI Codex CLI 執行的工作流。</p>
+          <div class="tags"><span>Codex</span><span>CLI</span><span>程式開發</span><span>PR</span></div>
+          <p class="source-status">已連到本機來源</p>
+        </article>        <article class="skill-card" data-search="hermes-agent Hermes Agent Hermes Agent 是 Nous Research 的開源 AI 代理框架。它可以在終端機、通訊平台與 IDE 中使用，透過工具呼叫操作檔案、執行命令、搜尋資料、管理記憶與技能。這份中文整理著重在日常使用與設定：profile、skills、tools、MCP、gateway、cron、memory，以及遇到問題時的排查方向。">
+          <p class="eyebrow">Hermes 平台與設定</p>
+          <h2><a href="skills/hermes-agent.html">Hermes Agent</a></h2>
+          <p>終端機、訊息平台與 IDE 可用的開源 AI 代理框架。</p>
+          <div class="tags"><span>Hermes</span><span>CLI</span><span>Profiles</span><span>Skills</span></div>
+          <p class="source-status">已連到本機來源</p>
+        </article>        <article class="skill-card" data-search="kanban-codex-lane Kanban Codex Lane 這個技能描述在 Hermes Kanban 架構中，如何把某張卡片交給 Codex CLI lane。Kanban 負責任務狀態、指派與留言；Codex 負責在 repo 中實作。關鍵是 worker 必須先讀卡片、確認範圍，再把足夠上下文轉成 Codex 任務，最後把測試結果與阻塞原因回寫到 kanban。">
+          <p class="eyebrow">多代理 Kanban 工作流</p>
+          <h2><a href="skills/kanban-codex-lane.html">Kanban Codex Lane</a></h2>
+          <p>讓 Hermes Kanban worker 把被指派的卡片轉交給 Codex CLI 執行。</p>
+          <div class="tags"><span>Kanban</span><span>Codex</span><span>Worker</span><span>任務隊列</span></div>
+          <p class="source-status">已連到本機來源</p>
+        </article>
+    </section>
+
+  </main>
+  <footer class="site-footer">
+    <p>繁體中文整理版。最後產生：2026-06-18 19:34 UTC</p>
+  </footer>
+</body>
+</html>
