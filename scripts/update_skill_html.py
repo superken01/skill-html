@@ -7,7 +7,6 @@ import html
 import json
 import re
 from dataclasses import dataclass
-from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -106,7 +105,7 @@ def render_commands(commands: list[dict[str, str]]) -> str:
 
 
 def page_shell(title: str, body: str, description: str = "", in_skill_dir: bool = False) -> str:
-    generated = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+    generated = "由 scripts/update_skill_html.py 產生"
     root = "../" if in_skill_dir else ""
     skills_root = "" if in_skill_dir else "skills/"
     return f"""<!doctype html>
