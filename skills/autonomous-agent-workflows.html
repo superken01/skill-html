@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="這個技能是一套多代理開發方法：先由主代理界定目標與完成定義，再把可獨立處理的子任務委派給其他代理或 CLI，最後由主代理整合、驗證、提交。它強調隔離、可觀測、可回復，而不是讓多個代理同時亂改同一個工作區。">
+  <title>自主代理工作流｜Skill HTML</title>
+  <link rel="stylesheet" href="../assets/style.css">
+  <script src="../assets/app.js" defer></script>
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="../index.html">Skill HTML</a>
+    <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav">選單</button>
+    <nav id="site-nav" class="site-nav">
+      <a href="../index.html">首頁</a>
+      <a href="codex.html">Codex</a>
+      <a href="kanban-codex-lane.html">Kanban Codex Lane</a>
+      <a href="autonomous-agent-workflows.html">自主代理</a>
+      <a href="hermes-agent.html">Hermes Agent</a>
+    </nav>
+  </header>
+  <main>
+    <section class="hero skill-hero">
+      <p class="eyebrow">自主 AI 開發代理</p>
+      <h1>自主代理工作流</h1>
+      <p class="subtitle">用 Hermes、Codex、Claude Code、OpenCode 等代理拆分任務、平行執行與驗收。</p>
+      <div class="tags"><span>多代理</span><span>Hermes</span><span>Codex</span><span>Claude Code</span><span>工作流</span></div>
+    </section>
+
+    <section class="content-grid">
+      <article class="panel span-2">
+        <h2>中文整理</h2>
+        <p>這個技能是一套多代理開發方法：先由主代理界定目標與完成定義，再把可獨立處理的子任務委派給其他代理或 CLI，最後由主代理整合、驗證、提交。它強調隔離、可觀測、可回復，而不是讓多個代理同時亂改同一個工作區。</p>
+      </article>
+      <aside class="panel source-card">
+        <h2>來源資訊</h2>
+        <dl>
+          <dt>Skill slug</dt><dd>autonomous-agent-workflows</dd>
+          <dt>來源路徑</dt><dd>/Users/super/.hermes/skills/autonomous-ai-agents/autonomous-agent-workflows/SKILL.md</dd>
+          <dt>原始描述</dt><dd>Use when configuring or delegating to autonomous coding agents, Hermes profiles, multi-agent teams, or external agent CLIs such as Claude Code, Codex, and OpenCode.</dd>
+          <dt>版本</dt><dd>1.0.0</dd>
+        </dl>
+      </aside>
+
+      <article class="panel">
+        <h2>何時使用</h2>
+        <ul><li>任務可以拆成多個互不衝突的子工作，例如前端、後端、測試、文件或調研。</li><li>需要快速探索多個方案，或讓一個代理實作、另一個代理 review。</li><li>需要長時間背景工作，但仍要主代理掌握狀態與最終品質。</li></ul>
+      </article>
+      <article class="panel">
+        <h2>不建議使用情境</h2>
+        <ul><li>任務很小，單一代理直接完成比較快。</li><li>變更高度耦合，平行實作會造成 merge 衝突。</li><li>沒有測試或驗收標準，代理結果無法可靠判斷。</li></ul>
+      </article>
+      <article class="panel span-2">
+        <h2>建議流程</h2>
+        <ul><li>定義成果：列出要交付的檔案、行為、測試與不做事項。</li><li>拆分任務：每個子任務都應有清楚輸入、輸出與邊界。</li><li>選擇執行方式：短任務可用 Hermes delegation；需要完整 CLI 能力時用 Codex/Claude Code/OpenCode。</li><li>隔離工作區：使用 branch、worktree 或獨立 repo clone，避免代理互踩。</li><li>收斂結果：讀取每個代理摘要，但以實際 diff、測試與檔案內容為準。</li><li>整合與驗證：主代理負責最後修整、跑測試、commit、PR 與回報。</li></ul>
+      </article>
+      <article class="panel span-2">
+        <h2>命令範例</h2>
+        <div class="commands"><article class="command-card"><h3>Hermes 一次性子代理</h3><pre><code>hermes chat -q &quot;請檢查這個 repo 的登入流程並寫出風險摘要。&quot;</code></pre></article><article class="command-card"><h3>使用 worktree 隔離平行開發</h3><pre><code>git worktree add ../feature-a -b feat/feature-a</code></pre></article><article class="command-card"><h3>整合前檢查</h3><pre><code>git diff --stat &amp;&amp; git status --short</code></pre></article></div>
+      </article>
+      <article class="panel span-2">
+        <h2>注意事項</h2>
+        <ul><li>多代理不是免審核。主代理仍要檢查每個結果是否符合需求。</li><li>任務描述要包含完成定義，否則代理會用自己的假設填空。</li><li>能用小步驗證就不要一次丟巨大任務；可觀測性比一次生成大量程式碼更重要。</li></ul>
+      </article>
+    </section>
+
+  </main>
+  <footer class="site-footer">
+    <p>繁體中文整理版。最後產生：由 scripts/update_skill_html.py 產生</p>
+  </footer>
+</body>
+</html>

@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="這個技能用來啟動與管理 Codex CLI，讓它在獨立工作目錄中完成明確的開發任務。重點不是把需求丟出去就放任不管，而是先界定範圍、提供必要上下文、要求測試與提交紀錄，再由 Ethan 檢查輸出與整合結果。">
+  <title>Codex CLI 開發代理｜Skill HTML</title>
+  <link rel="stylesheet" href="../assets/style.css">
+  <script src="../assets/app.js" defer></script>
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="../index.html">Skill HTML</a>
+    <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav">選單</button>
+    <nav id="site-nav" class="site-nav">
+      <a href="../index.html">首頁</a>
+      <a href="codex.html">Codex</a>
+      <a href="kanban-codex-lane.html">Kanban Codex Lane</a>
+      <a href="autonomous-agent-workflows.html">自主代理</a>
+      <a href="hermes-agent.html">Hermes Agent</a>
+    </nav>
+  </header>
+  <main>
+    <section class="hero skill-hero">
+      <p class="eyebrow">自主 AI 開發代理</p>
+      <h1>Codex CLI 開發代理</h1>
+      <p class="subtitle">把單一功能、修 bug、PR review 交給 OpenAI Codex CLI 執行的工作流。</p>
+      <div class="tags"><span>Codex</span><span>CLI</span><span>程式開發</span><span>PR</span><span>自動化</span></div>
+    </section>
+
+    <section class="content-grid">
+      <article class="panel span-2">
+        <h2>中文整理</h2>
+        <p>這個技能用來啟動與管理 Codex CLI，讓它在獨立工作目錄中完成明確的開發任務。重點不是把需求丟出去就放任不管，而是先界定範圍、提供必要上下文、要求測試與提交紀錄，再由 Ethan 檢查輸出與整合結果。</p>
+      </article>
+      <aside class="panel source-card">
+        <h2>來源資訊</h2>
+        <dl>
+          <dt>Skill slug</dt><dd>codex</dd>
+          <dt>來源路徑</dt><dd>/Users/super/.hermes/hermes-agent/skills/autonomous-ai-agents/codex/SKILL.md</dd>
+          <dt>原始描述</dt><dd>Delegate coding to OpenAI Codex CLI (features, PRs).</dd>
+          <dt>版本</dt><dd>1.0.0</dd>
+        </dl>
+      </aside>
+
+      <article class="panel">
+        <h2>何時使用</h2>
+        <ul><li>有明確可切分的程式任務，例如新增一個 endpoint、修一個錯誤、補測試或整理文件。</li><li>需要讓另一個代理平行探索或實作，但仍希望最後由目前工作流審核。</li><li>想用 Codex 擅長的 repo 內編輯與命令執行能力，加速重複性開發工作。</li></ul>
+      </article>
+      <article class="panel">
+        <h2>不建議使用情境</h2>
+        <ul><li>需求還很模糊，尚未定義成功條件或檔案範圍。</li><li>任務會改動憑證、部署、付款或刪除資料等高風險資源。</li><li>目前 repo 有未提交的重要變更，尚未隔離 branch 或 worktree。</li></ul>
+      </article>
+      <article class="panel span-2">
+        <h2>建議流程</h2>
+        <ul><li>確認 repo 狀態：先看 git status，避免 Codex 覆蓋人工未提交變更。</li><li>建立清楚任務說明：包含目標、可改檔案、不可改事項、測試命令、完成回報格式。</li><li>以 Codex CLI 執行：短任務可前景執行，長任務用背景程序並開啟完成通知。</li><li>讀取 Codex 回報與 git diff：不要直接相信摘要，要實際檢查變更。</li><li>跑測試與 lint：至少執行任務相關測試，必要時跑完整驗證。</li><li>由 Ethan commit 或要求 Codex 產出可審核 commit，再進 PR workflow。</li></ul>
+      </article>
+      <article class="panel span-2">
+        <h2>命令範例</h2>
+        <div class="commands"><article class="command-card"><h3>一次性委派範例</h3><pre><code>codex exec --full-auto &quot;請在目前 repo 實作登入錯誤訊息修正，先跑相關測試，最後回報變更與測試結果。&quot;</code></pre></article><article class="command-card"><h3>指定模型與工作目錄</h3><pre><code>cd /path/to/repo &amp;&amp; codex exec --model gpt-5.1-codex --full-auto &quot;依照 issue 描述補上單元測試與修正。&quot;</code></pre></article><article class="command-card"><h3>檢查 Codex 造成的變更</h3><pre><code>git status --short &amp;&amp; git diff --stat &amp;&amp; git diff</code></pre></article></div>
+      </article>
+      <article class="panel span-2">
+        <h2>注意事項</h2>
+        <ul><li>Codex 的輸出只是候選實作；完成前仍要由目前代理做 code review 與本地驗證。</li><li>任務 prompt 要明確要求不要改無關檔案，並要求列出測試命令與結果。</li><li>若需要與 Hermes 多代理並行，優先使用隔離 worktree 或獨立 branch，避免互相覆蓋。</li></ul>
+      </article>
+    </section>
+
+  </main>
+  <footer class="site-footer">
+    <p>繁體中文整理版。最後產生：由 scripts/update_skill_html.py 產生</p>
+  </footer>
+</body>
+</html>

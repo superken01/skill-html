@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="這個技能描述在 Hermes Kanban 架構中，如何把某張卡片交給 Codex CLI lane。Kanban 負責任務狀態、指派與留言；Codex 負責在 repo 中實作。關鍵是 worker 必須先讀卡片、確認範圍，再把足夠上下文轉成 Codex 任務，最後把測試結果與阻塞原因回寫到 kanban。">
+  <title>Kanban Codex Lane｜Skill HTML</title>
+  <link rel="stylesheet" href="../assets/style.css">
+  <script src="../assets/app.js" defer></script>
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="../index.html">Skill HTML</a>
+    <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav">選單</button>
+    <nav id="site-nav" class="site-nav">
+      <a href="../index.html">首頁</a>
+      <a href="codex.html">Codex</a>
+      <a href="kanban-codex-lane.html">Kanban Codex Lane</a>
+      <a href="autonomous-agent-workflows.html">自主代理</a>
+      <a href="hermes-agent.html">Hermes Agent</a>
+    </nav>
+  </header>
+  <main>
+    <section class="hero skill-hero">
+      <p class="eyebrow">多代理 Kanban 工作流</p>
+      <h1>Kanban Codex Lane</h1>
+      <p class="subtitle">讓 Hermes Kanban worker 把被指派的卡片轉交給 Codex CLI 執行。</p>
+      <div class="tags"><span>Kanban</span><span>Codex</span><span>Worker</span><span>任務隊列</span><span>自動化</span></div>
+    </section>
+
+    <section class="content-grid">
+      <article class="panel span-2">
+        <h2>中文整理</h2>
+        <p>這個技能描述在 Hermes Kanban 架構中，如何把某張卡片交給 Codex CLI lane。Kanban 負責任務狀態、指派與留言；Codex 負責在 repo 中實作。關鍵是 worker 必須先讀卡片、確認範圍，再把足夠上下文轉成 Codex 任務，最後把測試結果與阻塞原因回寫到 kanban。</p>
+      </article>
+      <aside class="panel source-card">
+        <h2>來源資訊</h2>
+        <dl>
+          <dt>Skill slug</dt><dd>kanban-codex-lane</dd>
+          <dt>來源路徑</dt><dd>/Users/super/.hermes/skills/autonomous-ai-agents/kanban-codex-lane/SKILL.md</dd>
+          <dt>原始描述</dt><dd>Use when a Hermes Kanban worker wants to run Codex CLI as an isolated implementation lane while Hermes keeps ownership of task lifecycle, reconciliation, testing, and handoff.</dd>
+          <dt>版本</dt><dd>1.0.0</dd>
+        </dl>
+      </aside>
+
+      <article class="panel">
+        <h2>何時使用</h2>
+        <ul><li>任務已經在 Hermes Kanban board 上，並且適合交給 Codex 做 repo 內修改。</li><li>需要多個 worker 平行處理不同卡片，同時保留任務狀態與審計紀錄。</li><li>希望 Codex lane 只處理程式碼實作，協調與驗收仍由 Kanban/orchestrator 管理。</li></ul>
+      </article>
+      <article class="panel">
+        <h2>不建議使用情境</h2>
+        <ul><li>卡片沒有明確 acceptance criteria。</li><li>任務需要跨多個 repo 或人工產品決策，Codex lane 無法獨立完成。</li><li>工作區沒有乾淨 branch/worktree，可能與其他 worker 衝突。</li></ul>
+      </article>
+      <article class="panel span-2">
+        <h2>建議流程</h2>
+        <ul><li>讀取目前 kanban task：了解目標、連結、留言、阻塞狀態與驗收條件。</li><li>檢查 repo 與 branch：確保 worker 在正確工作目錄，並確認沒有未預期變更。</li><li>組裝 Codex prompt：包含卡片內容、可改範圍、測試命令、禁止事項、回報格式。</li><li>執行 Codex CLI：讓 Codex 實作、跑測試、輸出摘要。</li><li>審核 diff 與測試：worker 必須自己檢查，不可只轉貼 Codex 的成功訊息。</li><li>更新 kanban：成功就附上 commit/測試結果並 complete；失敗就 block，寫清楚缺什麼。</li></ul>
+      </article>
+      <article class="panel span-2">
+        <h2>命令範例</h2>
+        <div class="commands"><article class="command-card"><h3>Codex lane 任務執行範例</h3><pre><code>codex exec --full-auto &quot;你是 kanban worker。請依照卡片內容完成實作，限制只改相關檔案，跑測試並回報結果。&quot;</code></pre></article><article class="command-card"><h3>完成後檢查變更</h3><pre><code>git status --short &amp;&amp; git diff --stat</code></pre></article><article class="command-card"><h3>常見驗證命令樣式</h3><pre><code>python -m pytest tests/ -q</code></pre></article></div>
+      </article>
+      <article class="panel span-2">
+        <h2>注意事項</h2>
+        <ul><li>Kanban 狀態是事實來源；Codex 只是執行器。任何成功、失敗、阻塞都要回寫卡片。</li><li>不要讓 Codex 自行擴大範圍。prompt 要明確列出不應修改的區域。</li><li>若 Codex 產生不可信變更，worker 應停止並 block，而不是硬 merge。</li></ul>
+      </article>
+    </section>
+
+  </main>
+  <footer class="site-footer">
+    <p>繁體中文整理版。最後產生：由 scripts/update_skill_html.py 產生</p>
+  </footer>
+</body>
+</html>
