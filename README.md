@@ -2,21 +2,45 @@
 
 Hermes skills 的繁體中文靜態 HTML 說明站。
 
-這個 repo 會從本機 Hermes skills 找來源，並用 `data/skills_zh.json` 裡的人工整理內容產生：
+這個 repo 會從本機 Hermes skills 找來源，並用 `data/skills_zh.json` 裡的翻譯資料產生：
 
 - `index.html`：首頁、搜尋與導覽。
 - `skills/<skill>.html`：每個 skill 一個頁面。
-- `assets/style.css`：手機友善 responsive 樣式。
-- `assets/app.js`：手機選單與首頁搜尋。
+- `assets/style.css`：手機友善 responsive 樣式，含深色模式。
+- `assets/app.js`：手機選單、首頁搜尋、深色/淺色手動切換。
+
+## 內容策略
+
+`SKILL.md` 是內容事實來源。HTML 的目標是「忠實翻譯 + 好讀排版」，不是自由重寫，也不是只做摘要。
+
+每個 skill page 應儘量保留來源 `SKILL.md` 的主要結構與資訊型態：
+
+- 主要章節與章節順序。
+- 清單、步驟、規則與注意事項。
+- 命令範例與程式碼區塊。
+- 檢查表。
+- 支援檔資訊（只列出檔名/用途提示，不把英文支援檔整篇貼上）。
+
+`data/skills_zh.json` 使用 `translated_sections` 來描述來源章節的繁體中文版本。每個 section 可以標示 `source_heading`，並用 `paragraph`、`list`、`steps`、`checklist`、`commands`、`code`、`table`、`callout` 等 block 呈現。請避免把英文原文整頁貼進 HTML；必要時保留短命令、檔名、CLI flag 與專有名詞。
+
+## 已整理技能
 
 目前初始整理的技能：
 
 - `codex`
 - `kanban-codex-lane`
 - `autonomous-agent-workflows`
+- `kanban-operations`
 - `hermes-agent`
 
-內容是繁體中文整理版，重點包含用途、何時使用、流程、注意事項與命令範例；不是把英文 SKILL.md 原文直接貼上。
+## Dark mode
+
+站台支援：
+
+- 系統 `prefers-color-scheme: dark` 自動深色模式。
+- Header 的「深色 / 淺色」按鈕手動切換。
+- 使用 `localStorage` 記住手動偏好。
+- 手機版維持單欄閱讀與可收合導覽。
 
 ## 需求
 
@@ -26,7 +50,7 @@ Hermes skills 的繁體中文靜態 HTML 說明站。
   2. `/Users/super/.hermes/skills`
   3. `/Users/super/.hermes/profiles/dev/skills`
 
-## 產生全部初始頁面
+## 產生全部頁面
 
     python3 scripts/update_skill_html.py --all
 
@@ -49,7 +73,11 @@ Hermes skills 的繁體中文靜態 HTML 說明站。
 ## 新增或改善中文內容
 
 1. 編輯 `data/skills_zh.json`。
-2. 加入或更新 skill slug 對應的資料，例如 `summary`、`use_when`、`workflow`、`commands`、`notes`。
+2. 加入或更新 skill slug 對應的資料，優先維護：
+   - `summary`
+   - `source_outline_zh`
+   - `translated_sections`
+   - `source_support_files`（若需要手動補充或覆蓋自動偵測）
 3. 執行：
 
        python3 scripts/update_skill_html.py <skill-slug>
@@ -74,6 +102,7 @@ Hermes skills 的繁體中文靜態 HTML 說明站。
 
     python3 scripts/update_skill_html.py --all
     python3 scripts/validate_site.py
+    python3 -m py_compile scripts/update_skill_html.py scripts/validate_site.py
     git status --short
 
-`validate_site.py` 會檢查必要 HTML/CSS/JS 是否存在、HTML 是否宣告 `zh-Hant`、是否有 responsive viewport，以及站內連結是否指向存在的檔案。
+`validate_site.py` 會檢查必要 HTML/CSS/JS 是否存在、HTML 是否宣告 `zh-Hant`、是否有 responsive viewport、站內連結是否指向存在的檔案、skill page 是否標示內容策略，以及 dark mode CSS/JS 是否存在。

@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="這個技能用來啟動與管理 Codex CLI，讓它在獨立工作目錄中完成明確的開發任務。重點不是把需求丟出去就放任不管，而是先界定範圍、提供必要上下文、要求測試與提交紀錄，再由 Ethan 檢查輸出與整合結果。">
+  <meta name="description" content="此頁依照 Codex CLI skill 的原始章節翻譯整理：保留何時使用、必要條件、一次性任務、長任務背景模式、重要 flags、Gateway 沙盒注意事項、PR review、worktree 平行修 issue、批次 PR review 與操作規則。">
   <title>Codex CLI 開發代理｜Skill HTML</title>
   <link rel="stylesheet" href="../assets/style.css">
   <script src="../assets/app.js" defer></script>
@@ -11,6 +11,7 @@
 <body>
   <header class="site-header">
     <a class="brand" href="../index.html">Skill HTML</a>
+    <button class="theme-toggle" type="button" aria-label="切換深色模式" aria-pressed="false">深色</button>
     <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav">選單</button>
     <nav id="site-nav" class="site-nav">
       <a href="../index.html">首頁</a>
@@ -25,14 +26,15 @@
     <section class="hero skill-hero">
       <p class="eyebrow">自主 AI 開發代理</p>
       <h1>Codex CLI 開發代理</h1>
-      <p class="subtitle">把單一功能、修 bug、PR review 交給 OpenAI Codex CLI 執行的工作流。</p>
+      <p class="subtitle">把功能、修 bug、重構、PR review 或批次 issue 修正交給 OpenAI Codex CLI 的工作流。</p>
       <div class="tags"><span>Codex</span><span>CLI</span><span>程式開發</span><span>PR</span><span>自動化</span></div>
     </section>
 
     <section class="content-grid">
-      <article class="panel span-2">
-        <h2>中文整理</h2>
-        <p>這個技能用來啟動與管理 Codex CLI，讓它在獨立工作目錄中完成明確的開發任務。重點不是把需求丟出去就放任不管，而是先界定範圍、提供必要上下文、要求測試與提交紀錄，再由 Ethan 檢查輸出與整合結果。</p>
+      <article class="panel span-2 content-policy">
+        <h2>內容策略：忠實翻譯 + 好讀排版</h2>
+        <p>此頁依照 Codex CLI skill 的原始章節翻譯整理：保留何時使用、必要條件、一次性任務、長任務背景模式、重要 flags、Gateway 沙盒注意事項、PR review、worktree 平行修 issue、批次 PR review 與操作規則。</p>
+        <p class="muted">本頁不是自由重寫或摘要；每個主要章節都對應來源 SKILL.md 的章節、清單、命令、檢查表或支援檔資訊。</p>
       </article>
       <aside class="panel source-card">
         <h2>來源資訊</h2>
@@ -43,32 +45,25 @@
           <dt>版本</dt><dd>1.0.0</dd>
         </dl>
       </aside>
-
       <article class="panel">
-        <h2>何時使用</h2>
-        <ul><li>有明確可切分的程式任務，例如新增一個 endpoint、修一個錯誤、補測試或整理文件。</li><li>需要讓另一個代理平行探索或實作，但仍希望最後由目前工作流審核。</li><li>想用 Codex 擅長的 repo 內編輯與命令執行能力，加速重複性開發工作。</li></ul>
+        <h2>來源章節對照</h2>
+        <ul><li>Codex CLI：透過 Hermes terminal 委派程式任務。</li><li>When to use：功能、重構、PR review、批次 issue 修正。</li><li>Prerequisites：Codex 安裝、認證、git repo、PTY。</li><li>One-Shot Tasks：使用 <code>codex exec</code> 執行可結束的一次性任務。</li><li>Background Mode：長任務用背景 PTY，透過 process 監控、送入、停止。</li><li>Key Flags：<code>exec</code>、<code>--full-auto</code>、<code>--yolo</code>、<code>--sandbox danger-full-access</code>。</li><li>Hermes Gateway Caveat：服務環境下 sandbox 可能失敗，需改用 danger-full-access 並加強流程邊界。</li><li>PR Reviews / Parallel Issue Fixing / Batch PR Reviews：隔離 checkout 或 worktree、檢查 diff、建立 PR。</li><li>Rules：PTY、git repo、one-shot、背景監控、不要干擾、可平行。</li></ul>
       </article>
-      <article class="panel">
-        <h2>不建議使用情境</h2>
-        <ul><li>需求還很模糊，尚未定義成功條件或檔案範圍。</li><li>任務會改動憑證、部署、付款或刪除資料等高風險資源。</li><li>目前 repo 有未提交的重要變更，尚未隔離 branch 或 worktree。</li></ul>
-      </article>
-      <article class="panel span-2">
-        <h2>建議流程</h2>
-        <ul><li>確認 repo 狀態：先看 git status，避免 Codex 覆蓋人工未提交變更。</li><li>建立清楚任務說明：包含目標、可改檔案、不可改事項、測試命令、完成回報格式。</li><li>以 Codex CLI 執行：短任務可前景執行，長任務用背景程序並開啟完成通知。</li><li>讀取 Codex 回報與 git diff：不要直接相信摘要，要實際檢查變更。</li><li>跑測試與 lint：至少執行任務相關測試，必要時跑完整驗證。</li><li>由 Ethan commit 或要求 Codex 產出可審核 commit，再進 PR workflow。</li></ul>
-      </article>
-      <article class="panel span-2">
-        <h2>命令範例</h2>
-        <div class="commands"><article class="command-card"><h3>一次性委派範例</h3><pre><code>codex exec --full-auto &quot;請在目前 repo 實作登入錯誤訊息修正，先跑相關測試，最後回報變更與測試結果。&quot;</code></pre></article><article class="command-card"><h3>指定模型與工作目錄</h3><pre><code>cd /path/to/repo &amp;&amp; codex exec --model gpt-5.1-codex --full-auto &quot;依照 issue 描述補上單元測試與修正。&quot;</code></pre></article><article class="command-card"><h3>檢查 Codex 造成的變更</h3><pre><code>git status --short &amp;&amp; git diff --stat &amp;&amp; git diff</code></pre></article></div>
-      </article>
-      <article class="panel span-2">
-        <h2>注意事項</h2>
-        <ul><li>Codex 的輸出只是候選實作；完成前仍要由目前代理做 code review 與本地驗證。</li><li>任務 prompt 要明確要求不要改無關檔案，並要求列出測試命令與結果。</li><li>若需要與 Hermes 多代理並行，優先使用隔離 worktree 或獨立 branch，避免互相覆蓋。</li></ul>
+      <article class="panel span-2 translated-section"><div class="section-number">01</div><h2>用途與定位</h2><p class="source-heading">對應來源章節：Codex CLI / When to use</p><p>Codex CLI 是 OpenAI 的自主 coding agent CLI。這個 skill 的用途是：當任務已經足夠明確，而且目前工作區是一個 git repository 時，透過 Hermes terminal 將可驗證的程式任務委派給 Codex。</p><ul><li>建立功能。</li><li>重構既有程式。</li><li>進行 PR review。</li><li>批次修正多個 issue。</li></ul><aside class="callout"><strong>核心原則</strong><p>Codex 的輸出是候選變更，不是完成聲明；最後仍要由目前代理檢查 diff、跑測試、決定是否採納。</p></aside></article><article class="panel span-2 translated-section"><div class="section-number">02</div><h2>必要條件</h2><p class="source-heading">對應來源章節：Prerequisites</p><ul class="checklist"><li>已安裝 Codex：<code>npm install -g @openai/codex</code>。</li><li>OpenAI 認證已設定；可以是 <code>OPENAI_API_KEY</code>，也可以是 Codex CLI login 產生的 OAuth credentials。</li><li>必須在 git repository 裡執行；Codex 不接受非 git 目錄。</li><li>Hermes terminal 呼叫 Codex 時使用 <code>pty=true</code>，因為 Codex 是互動式終端程式。</li></ul><p>Hermes 自己的 <code>openai-codex</code> provider 會使用 Hermes 管理的 OAuth；獨立 Codex CLI 可能使用 <code>~/.codex/auth.json</code>。不要只因為缺少 <code>OPENAI_API_KEY</code> 就判定 Codex 無法登入。</p></article><article class="panel span-2 translated-section"><div class="section-number">03</div><h2>一次性任務與 scratch 工作</h2><p class="source-heading">對應來源章節：One-Shot Tasks</p><p>短任務優先使用 <code>codex exec</code>，讓 Codex 在完成後自行結束。若只是臨時探索，也要建立臨時 git repo，因為 Codex 需要 git repository。</p><div class="commands"><article class="command-card"><h3>在專案中執行一次性任務</h3><pre><code>terminal(command=&quot;codex exec &#x27;Add dark mode toggle to settings&#x27;&quot;, workdir=&quot;~/project&quot;, pty=true)</code></pre></article><article class="command-card"><h3>scratch 目錄仍先 git init</h3><pre><code>terminal(command=&quot;cd $(mktemp -d) &amp;&amp; git init &amp;&amp; codex exec &#x27;Build a snake game in Python&#x27;&quot;, pty=true)</code></pre></article></div></article><article class="panel span-2 translated-section"><div class="section-number">04</div><h2>長任務背景模式</h2><p class="source-heading">對應來源章節：Background Mode (Long Tasks)</p><ol><li>用 <code>background=true</code> 和 <code>pty=true</code> 啟動 Codex 長任務。</li><li>保存回傳的 <code>session_id</code>。</li><li>用 <code>process(action=&quot;poll&quot;)</code> 或 <code>process(action=&quot;log&quot;)</code> 檢查進度。</li><li>如果 Codex 提問，用 <code>process(action=&quot;submit&quot;)</code> 回覆。</li><li>需要停止時，用 <code>process(action=&quot;kill&quot;)</code>。</li></ol><div class="code-block"><h3>背景啟動與監控樣式</h3><pre><code>terminal(command=&quot;codex exec --full-auto &#x27;Refactor the auth module&#x27;&quot;, workdir=&quot;~/project&quot;, background=true, pty=true)
+process(action=&quot;poll&quot;, session_id=&quot;&lt;id&gt;&quot;)
+process(action=&quot;log&quot;, session_id=&quot;&lt;id&gt;&quot;)
+process(action=&quot;submit&quot;, session_id=&quot;&lt;id&gt;&quot;, data=&quot;yes&quot;)
+process(action=&quot;kill&quot;, session_id=&quot;&lt;id&gt;&quot;)</code></pre></div></article><article class="panel span-2 translated-section"><div class="section-number">05</div><h2>重要 flags 與 Gateway 沙盒注意事項</h2><p class="source-heading">對應來源章節：Key Flags / Hermes Gateway Caveat</p><div class="table-wrap"><table><thead><tr><th>Flag</th><th>用途</th></tr></thead><tbody><tr><td><code>exec &quot;prompt&quot;</code></td><td>一次性執行，完成後離開。</td></tr><tr><td><code>--full-auto</code></td><td>在 sandbox 中自動批准 workspace 內的檔案修改。</td></tr><tr><td><code>--yolo</code></td><td>不使用 sandbox、略過 approval；最快但風險最高。</td></tr><tr><td><code>--sandbox danger-full-access</code></td><td>當 Hermes gateway/service context 讓 workspace-write sandbox 失敗時使用。</td></tr></tbody></table></div><p>在 Telegram/gateway 這類 service context 呼叫 Codex 時，bubblewrap 或 user namespace 可能因權限不足而失敗。若遇到 <code>uid map</code> 或 <code>loopback</code> 類錯誤，可改用 <code>--sandbox danger-full-access</code>，但要用乾淨 git status、明確 workdir、窄範圍 prompt、diff review 與測試作為安全邊界。</p></article><article class="panel span-2 translated-section"><div class="section-number">06</div><h2>PR review、worktree 平行修正與批次 review</h2><p class="source-heading">對應來源章節：PR Reviews / Parallel Issue Fixing with Worktrees / Batch PR Reviews</p><ul><li>PR review：clone 到暫存目錄、checkout PR，再讓 Codex review against base branch。</li><li>平行 issue fixing：為每個 issue 建立獨立 worktree 與 branch，各自啟動 Codex，完成後推 branch 開 PR。</li><li>批次 PR review：fetch PR refs，針對每個 PR 以背景 Codex 任務平行 review，最後再貼回評論。</li></ul><div class="commands"><article class="command-card"><h3>安全 PR review clone</h3><pre><code>REVIEW=$(mktemp -d) &amp;&amp; git clone https://github.com/user/repo.git $REVIEW &amp;&amp; cd $REVIEW &amp;&amp; gh pr checkout 42 &amp;&amp; codex review --base origin/main</code></pre></article><article class="command-card"><h3>建立隔離 worktree</h3><pre><code>git worktree add -b fix/issue-78 /tmp/issue-78 main</code></pre></article><article class="command-card"><h3>fetch PR refs</h3><pre><code>git fetch origin &#x27;+refs/pull/*/head:refs/remotes/origin/pr/*&#x27;</code></pre></article></div></article><article class="panel span-2 translated-section"><div class="section-number">07</div><h2>操作規則</h2><p class="source-heading">對應來源章節：Rules</p><ul class="checklist"><li>一定使用 <code>pty=true</code>。</li><li>一定在 git repo 內執行；scratch 也先 <code>git init</code>。</li><li>短任務用 <code>codex exec</code>。</li><li>需要實作時可用 <code>--full-auto</code>，但仍要檢查 diff。</li><li>長任務用 background 並監控 process。</li><li>不要頻繁干擾 Codex；只 poll/log 或必要時送入回覆。</li><li>多個 Codex 任務可以平行，但應用 worktree 或獨立 branch 隔離。</li></ul></article>
+      <article class="panel span-2 support-files">
+        <h2>支援檔資訊</h2>
+        <p class="muted">這些是來源 skill 目錄中 `SKILL.md` 以外的檔案；HTML 只列出檔名與用途提示，不直接貼整份英文內容。</p>
+        <p class="muted">來源 skill 沒有額外支援檔，或本機未找到。</p>
       </article>
     </section>
 
   </main>
   <footer class="site-footer">
-    <p>繁體中文整理版。最後產生：由 scripts/update_skill_html.py 產生</p>
+    <p>繁體中文整理版。由 scripts/update_skill_html.py 產生</p>
   </footer>
 </body>
 </html>

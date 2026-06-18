@@ -11,6 +11,7 @@
 <body>
   <header class="site-header">
     <a class="brand" href="index.html">Skill HTML</a>
+    <button class="theme-toggle" type="button" aria-label="切換深色模式" aria-pressed="false">深色</button>
     <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav">選單</button>
     <nav id="site-nav" class="site-nav">
       <a href="index.html">首頁</a>
@@ -25,48 +26,48 @@
     <section class="hero">
       <p class="eyebrow">Hermes Skills 繁體中文導覽</p>
       <h1>技能說明 HTML 站</h1>
-      <p class="subtitle">把本機 Hermes skills 整理成好閱讀、可搜尋、手機友善的繁體中文頁面。內容不是英文原文直貼，而是整理用途、流程、注意事項與命令範例。</p>
+      <p class="subtitle">以來源 <code>SKILL.md</code> 為準，保留主要章節、清單、命令、檢查表與支援檔資訊，翻譯整理成好讀的繁體中文。支援系統深色模式，也可手動切換並記住偏好。</p>
       <label class="search-box" for="skill-search">搜尋技能</label>
       <input id="skill-search" type="search" placeholder="輸入 Codex、Kanban、Hermes、代理..." autocomplete="off">
     </section>
 
     <section class="skill-list" aria-label="技能列表">
-        <article class="skill-card" data-search="autonomous-agent-workflows 自主代理工作流 這個技能是一套多代理開發方法：先由主代理界定目標與完成定義，再把可獨立處理的子任務委派給其他代理或 CLI，最後由主代理整合、驗證、提交。它強調隔離、可觀測、可回復，而不是讓多個代理同時亂改同一個工作區。">
+        <article class="skill-card" data-search="autonomous-agent-workflows 自主代理工作流 此頁依照 Autonomous Agent Workflows 的 source SKILL.md 翻譯：Overview、Decision Flow、External coding CLIs、OpenCode API lane/API mode、Hermes profiles and model providers、Multi-agent agency teams、支援檔與 Verification Checklist。 多代理 Hermes Codex Claude Code OpenCode Kanban">
           <p class="eyebrow">自主 AI 開發代理</p>
           <h2><a href="skills/autonomous-agent-workflows.html">自主代理工作流</a></h2>
-          <p>用 Hermes、Codex、Claude Code、OpenCode 等代理拆分任務、平行執行與驗收。</p>
+          <p>設定與委派 Hermes profiles、Kanban、Claude Code、Codex、OpenCode 等自主 coding agents 的 umbrella skill。</p>
           <div class="tags"><span>多代理</span><span>Hermes</span><span>Codex</span><span>Claude Code</span></div>
-          <p class="source-status">已連到本機來源</p>
-        </article>        <article class="skill-card" data-search="codex Codex CLI 開發代理 這個技能用來啟動與管理 Codex CLI，讓它在獨立工作目錄中完成明確的開發任務。重點不是把需求丟出去就放任不管，而是先界定範圍、提供必要上下文、要求測試與提交紀錄，再由 Ethan 檢查輸出與整合結果。">
+          <p class="source-status">已連到本機來源 · 7 個翻譯章節</p>
+        </article>        <article class="skill-card" data-search="codex Codex CLI 開發代理 此頁依照 Codex CLI skill 的原始章節翻譯整理：保留何時使用、必要條件、一次性任務、長任務背景模式、重要 flags、Gateway 沙盒注意事項、PR review、worktree 平行修 issue、批次 PR review 與操作規則。 Codex CLI 程式開發 PR 自動化">
           <p class="eyebrow">自主 AI 開發代理</p>
           <h2><a href="skills/codex.html">Codex CLI 開發代理</a></h2>
-          <p>把單一功能、修 bug、PR review 交給 OpenAI Codex CLI 執行的工作流。</p>
+          <p>把功能、修 bug、重構、PR review 或批次 issue 修正交給 OpenAI Codex CLI 的工作流。</p>
           <div class="tags"><span>Codex</span><span>CLI</span><span>程式開發</span><span>PR</span></div>
-          <p class="source-status">已連到本機來源</p>
-        </article>        <article class="skill-card" data-search="hermes-agent Hermes Agent Hermes Agent 是 Nous Research 的開源 AI 代理框架。它可以在終端機、通訊平台與 IDE 中使用，透過工具呼叫操作檔案、執行命令、搜尋資料、管理記憶與技能。這份中文整理著重在日常使用與設定：profile、skills、tools、MCP、gateway、cron、memory，以及遇到問題時的排查方向。">
+          <p class="source-status">已連到本機來源 · 7 個翻譯章節</p>
+        </article>        <article class="skill-card" data-search="hermes-agent Hermes Agent 此頁以 Hermes Agent skill 為準，將原始長篇 skill 分成繁中可讀章節：定位與差異化、Quick Start、CLI reference、slash commands、paths/config、providers、toolsets、安全與隱私、voice、spawning、durable systems、troubleshooting、where to find things、contributor quick reference。官方文件仍是最新權威來源。 Hermes CLI Profiles Skills MCP Gateway">
           <p class="eyebrow">Hermes 平台與設定</p>
           <h2><a href="skills/hermes-agent.html">Hermes Agent</a></h2>
-          <p>終端機、訊息平台與 IDE 可用的開源 AI 代理框架。</p>
+          <p>終端機、訊息平台與 IDE 可用的開源 AI agent framework；支援 tools、skills、memory、profiles、gateway、MCP 與排程。</p>
           <div class="tags"><span>Hermes</span><span>CLI</span><span>Profiles</span><span>Skills</span></div>
-          <p class="source-status">已連到本機來源</p>
-        </article>        <article class="skill-card" data-search="kanban-codex-lane Kanban Codex Lane 這個技能描述在 Hermes Kanban 架構中，如何把某張卡片交給 Codex CLI lane。Kanban 負責任務狀態、指派與留言；Codex 負責在 repo 中實作。關鍵是 worker 必須先讀卡片、確認範圍，再把足夠上下文轉成 Codex 任務，最後把測試結果與阻塞原因回寫到 kanban。">
+          <p class="source-status">已連到本機來源 · 10 個翻譯章節</p>
+        </article>        <article class="skill-card" data-search="kanban-codex-lane Kanban Codex Lane 此頁忠實保留 Kanban Codex Lane skill 的結構：Overview、何時使用與何時不用、所有權規則、worktree/branch pattern、能力檢查、模式選擇、prompt 建構、監控與 kill、reconciliation checklist、kanban_complete metadata schema、常見陷阱與驗證清單。 Kanban Codex Worker Worktree 自動化">
           <p class="eyebrow">多代理 Kanban 工作流</p>
           <h2><a href="skills/kanban-codex-lane.html">Kanban Codex Lane</a></h2>
-          <p>讓 Hermes Kanban worker 把被指派的卡片轉交給 Codex CLI 執行。</p>
-          <div class="tags"><span>Kanban</span><span>Codex</span><span>Worker</span><span>任務隊列</span></div>
-          <p class="source-status">已連到本機來源</p>
-        </article>        <article class="skill-card" data-search="kanban-operations Kanban Operations 看板操作總覽 用途：這個技能是 Hermes Kanban 的操作總覽，將 orchestrator lane、worker lane 與 operator lane 的責任分清楚。它不是把英文原文搬過來，而是把日常看板操作整理成手機上也容易閱讀的中文說明：如何拆卡、指派 profile、讓 worker 在正確工作區執行、用看板證據確認狀態，以及在卡住、逾時或需要重試時如何安全恢復。">
+          <p>Hermes Kanban worker 需要把明確實作交給 Codex CLI 時使用的雙 lane 約定。</p>
+          <div class="tags"><span>Kanban</span><span>Codex</span><span>Worker</span><span>Worktree</span></div>
+          <p class="source-status">已連到本機來源 · 9 個翻譯章節</p>
+        </article>        <article class="skill-card" data-search="kanban-operations Kanban Operations 看板操作總覽 此頁依照 Kanban Operations umbrella skill 的原始章節翻譯整理：Overview、Orchestrator lane、Worker lane、Operator lane、支援檔與 Verification Checklist。重點是用 board evidence 管理狀態，而不是靠猜測或口頭摘要。 Kanban Hermes Orchestrator Worker Operator Recovery">
           <p class="eyebrow">多代理 Kanban 工作流</p>
           <h2><a href="skills/kanban-operations.html">Kanban Operations 看板操作總覽</a></h2>
-          <p>操作 Hermes Kanban 時，用來拆任務、派工、追蹤 worker、重試卡片與排查 dispatcher 的總覽指南。</p>
+          <p>拆任務、派工、worker handoff、重試、dispatcher 除錯、復原與 operator workflows 的 Hermes Kanban 總覽。</p>
           <div class="tags"><span>Kanban</span><span>Hermes</span><span>Orchestrator</span><span>Worker</span></div>
-          <p class="source-status">已連到本機來源</p>
+          <p class="source-status">已連到本機來源 · 5 個翻譯章節</p>
         </article>
     </section>
 
   </main>
   <footer class="site-footer">
-    <p>繁體中文整理版。最後產生：由 scripts/update_skill_html.py 產生</p>
+    <p>繁體中文整理版。由 scripts/update_skill_html.py 產生</p>
   </footer>
 </body>
 </html>
