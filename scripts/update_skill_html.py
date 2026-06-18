@@ -21,7 +21,7 @@ SKILL_ROOTS = [
     Path("/Users/super/.hermes/profiles/dev/skills"),
 ]
 
-DEFAULT_SKILLS = ["codex", "kanban-codex-lane", "autonomous-agent-workflows", "hermes-agent"]
+DEFAULT_SKILLS = ["codex", "kanban-codex-lane", "kanban-operations", "autonomous-agent-workflows", "hermes-agent"]
 
 
 @dataclass
@@ -126,6 +126,7 @@ def page_shell(title: str, body: str, description: str = "", in_skill_dir: bool 
       <a href="{root}index.html">首頁</a>
       <a href="{skills_root}codex.html">Codex</a>
       <a href="{skills_root}kanban-codex-lane.html">Kanban Codex Lane</a>
+      <a href="{skills_root}kanban-operations.html">Kanban Operations</a>
       <a href="{skills_root}autonomous-agent-workflows.html">自主代理</a>
       <a href="{skills_root}hermes-agent.html">Hermes Agent</a>
     </nav>
@@ -145,7 +146,7 @@ def render_skill_page(slug: str, data: dict[str, Any], source: SourceSkill) -> s
     title = data.get("title", slug)
     tags = data.get("tags", [])
     source_path = str(source.path) if source.path else "未找到本機來源"
-    source_description = source.description or "本機來源未提供描述。"
+    source_description = data.get("source_description_zh") or source.description or "本機來源未提供描述。"
     tag_html = "".join(f"<span>{esc(tag)}</span>" for tag in tags)
     body = f"""    <section class="hero skill-hero">
       <p class="eyebrow">{esc(data.get('category', 'Hermes Skill'))}</p>
@@ -164,7 +165,7 @@ def render_skill_page(slug: str, data: dict[str, Any], source: SourceSkill) -> s
         <dl>
           <dt>Skill slug</dt><dd>{esc(slug)}</dd>
           <dt>來源路徑</dt><dd>{esc(source_path)}</dd>
-          <dt>原始描述</dt><dd>{esc(source_description)}</dd>
+          <dt>來源描述</dt><dd>{esc(source_description)}</dd>
           <dt>版本</dt><dd>{esc(source.version or '未標示')}</dd>
         </dl>
       </aside>

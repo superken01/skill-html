@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="用途：這個技能是 Hermes Kanban 的操作總覽，將 orchestrator lane、worker lane 與 operator lane 的責任分清楚。它不是把英文原文搬過來，而是把日常看板操作整理成手機上也容易閱讀的中文說明：如何拆卡、指派 profile、讓 worker 在正確工作區執行、用看板證據確認狀態，以及在卡住、逾時或需要重試時如何安全恢復。">
+  <title>Kanban Operations 看板操作總覽｜Skill HTML</title>
+  <link rel="stylesheet" href="../assets/style.css">
+  <script src="../assets/app.js" defer></script>
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="../index.html">Skill HTML</a>
+    <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav">選單</button>
+    <nav id="site-nav" class="site-nav">
+      <a href="../index.html">首頁</a>
+      <a href="codex.html">Codex</a>
+      <a href="kanban-codex-lane.html">Kanban Codex Lane</a>
+      <a href="kanban-operations.html">Kanban Operations</a>
+      <a href="autonomous-agent-workflows.html">自主代理</a>
+      <a href="hermes-agent.html">Hermes Agent</a>
+    </nav>
+  </header>
+  <main>
+    <section class="hero skill-hero">
+      <p class="eyebrow">多代理 Kanban 工作流</p>
+      <h1>Kanban Operations 看板操作總覽</h1>
+      <p class="subtitle">操作 Hermes Kanban 時，用來拆任務、派工、追蹤 worker、重試卡片與排查 dispatcher 的總覽指南。</p>
+      <div class="tags"><span>Kanban</span><span>Hermes</span><span>Orchestrator</span><span>Worker</span><span>Operator</span><span>任務隊列</span></div>
+    </section>
+
+    <section class="content-grid">
+      <article class="panel span-2">
+        <h2>中文整理</h2>
+        <p>用途：這個技能是 Hermes Kanban 的操作總覽，將 orchestrator lane、worker lane 與 operator lane 的責任分清楚。它不是把英文原文搬過來，而是把日常看板操作整理成手機上也容易閱讀的中文說明：如何拆卡、指派 profile、讓 worker 在正確工作區執行、用看板證據確認狀態，以及在卡住、逾時或需要重試時如何安全恢復。</p>
+      </article>
+      <aside class="panel source-card">
+        <h2>來源資訊</h2>
+        <dl>
+          <dt>Skill slug</dt><dd>kanban-operations</dd>
+          <dt>來源路徑</dt><dd>/Users/super/.hermes/skills/devops/kanban-operations/SKILL.md</dd>
+          <dt>來源描述</dt><dd>操作 Hermes Kanban 時使用：拆解工作、路由卡片、worker 交接、重試、派送除錯、復原，以及 dashboard/operator 日常流程。</dd>
+          <dt>版本</dt><dd>1.0.0</dd>
+        </dl>
+      </aside>
+
+      <article class="panel">
+        <h2>何時使用</h2>
+        <ul><li>老闆或團隊要用 Hermes Kanban 拆分一批工作，並把不同卡片交給適合的 profile 或 worker。</li><li>需要判斷某張卡片到底是尚未派工、worker 沒啟動、模型停住、外部工具失敗、逾時，還是等待人工審核。</li><li>worker 完成或阻塞任務時，需要知道應該回寫哪些摘要、證據、artifact、測試結果與下一步。</li><li>operator 要重試、解除阻塞、查看 runs/logs，或確認 dispatcher 是否真的把卡片送出去。</li></ul>
+      </article>
+      <article class="panel">
+        <h2>不建議使用情境</h2>
+        <ul><li>只是單一 repo 的小修改，直接由目前代理完成會比建立 Kanban 卡片更快。</li><li>尚未知道可用 profile 或 worker 名稱；這時不要憑空指派，應先查 profile 或詢問。</li><li>任務需要立即人工產品決策，沒有清楚驗收條件，worker 無法獨立完成。</li></ul>
+      </article>
+      <article class="panel span-2">
+        <h2>建議流程</h2>
+        <ul><li>Orchestrator lane：先用 hermes profile list 或向使用者確認可用 profile，再把可平行處理的工作拆成獨立卡片；只有真的有依賴時才用 parent link，不要只在文字裡描述依賴。</li><li>Orchestrator lane：派工時寫清楚目標、範圍、驗收條件、禁止事項與建議驗證命令；身為 orchestrator 時不要自己偷做 worker 的實作，也不要發明不存在的 assignee。</li><li>Worker lane：接到卡片後，先讀卡片內容、先前留言與 run 紀錄，確認自己在 $HERMES_KANBAN_WORKSPACE 內工作；只有有實質進度時才 heartbeat。</li><li>Worker lane：完成時要回寫結構化摘要、實際驗證結果、commit/artifact 或檔案路徑；若需要人工審核或缺少資料，應 block 並寫明原因與需要誰處理。</li><li>Operator lane：回答卡片有沒有跑、為什麼卡住時，必須以 list、show、runs、logs 或 dispatcher 輸出為證據，不要只看卡片標題推測。</li><li>Operator lane：重試時先確認阻塞原因，必要時 unblock 並寫 reason，只 dispatch 一輪，然後再用 show 與 runs 驗證狀態是否真的改變。</li></ul>
+      </article>
+      <article class="panel span-2">
+        <h2>命令範例</h2>
+        <div class="commands"><article class="command-card"><h3>查看可用 Hermes profiles</h3><pre><code>hermes profile list</code></pre></article><article class="command-card"><h3>查看看板卡片列表</h3><pre><code>hermes kanban list</code></pre></article><article class="command-card"><h3>查看單一卡片細節</h3><pre><code>hermes kanban show &lt;card-id&gt;</code></pre></article><article class="command-card"><h3>查看卡片執行紀錄</h3><pre><code>hermes kanban runs &lt;card-id&gt;</code></pre></article><article class="command-card"><h3>查看卡片或 worker logs</h3><pre><code>hermes kanban logs &lt;card-id&gt;</code></pre></article><article class="command-card"><h3>解除阻塞並留下原因</h3><pre><code>hermes kanban unblock &lt;card-id&gt; --reason &quot;補齊缺少資訊後重試&quot;</code></pre></article><article class="command-card"><h3>派送一輪待處理卡片</h3><pre><code>hermes kanban dispatch --once</code></pre></article><article class="command-card"><h3>Worker 確認工作區</h3><pre><code>pwd &amp;&amp; echo &quot;$HERMES_KANBAN_WORKSPACE&quot; &amp;&amp; git status --short</code></pre></article></div>
+      </article>
+      <article class="panel span-2">
+        <h2>注意事項</h2>
+        <ul><li>驗證清單：指派前已確認 profile 存在，沒有憑空假設 assignee。</li><li>驗證清單：真正的依賴已用 parent link 表示，而不是只寫在描述文字裡。</li><li>驗證清單：worker 完成、阻塞或重試後，都有用 show 與 runs/logs 交叉確認。</li><li>驗證清單：完成聲明有看板狀態、留言、artifact、commit 或測試輸出支撐。</li><li>注意事項：Kanban board 是狀態事實來源；worker 或其他代理的口頭摘要只能當線索。</li><li>注意事項：重試前先分辨是派送、啟動、模型、工具、逾時或人工審核問題，避免盲目連續 dispatch。</li><li>注意事項：大量卡片平行執行時，優先隔離 workspace、branch 或 repo clone，避免 worker 互相覆蓋。</li></ul>
+      </article>
+    </section>
+
+  </main>
+  <footer class="site-footer">
+    <p>繁體中文整理版。最後產生：由 scripts/update_skill_html.py 產生</p>
+  </footer>
+</body>
+</html>
