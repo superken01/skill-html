@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="這個技能是一套多代理開發方法：先由主代理界定目標與完成定義，再把可獨立處理的子任務委派給其他代理或 CLI，最後由主代理整合、驗證、提交。它強調隔離、可觀測、可回復，而不是讓多個代理同時亂改同一個工作區。">
+  <meta name="description" content="此頁依照 Autonomous Agent Workflows 的 source SKILL.md 翻譯：Overview、Decision Flow、External coding CLIs、OpenCode API lane/API mode、Hermes profiles and model providers、Multi-agent agency teams、支援檔與 Verification Checklist。">
   <title>自主代理工作流｜Skill HTML</title>
   <link rel="stylesheet" href="../assets/style.css">
   <script src="../assets/app.js" defer></script>
@@ -11,6 +11,7 @@
 <body>
   <header class="site-header">
     <a class="brand" href="../index.html">Skill HTML</a>
+    <button class="theme-toggle" type="button" aria-label="切換深色模式" aria-pressed="false">深色</button>
     <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav">選單</button>
     <nav id="site-nav" class="site-nav">
       <a href="../index.html">首頁</a>
@@ -25,14 +26,15 @@
     <section class="hero skill-hero">
       <p class="eyebrow">自主 AI 開發代理</p>
       <h1>自主代理工作流</h1>
-      <p class="subtitle">用 Hermes、Codex、Claude Code、OpenCode 等代理拆分任務、平行執行與驗收。</p>
-      <div class="tags"><span>多代理</span><span>Hermes</span><span>Codex</span><span>Claude Code</span><span>工作流</span></div>
+      <p class="subtitle">設定與委派 Hermes profiles、Kanban、Claude Code、Codex、OpenCode 等自主 coding agents 的 umbrella skill。</p>
+      <div class="tags"><span>多代理</span><span>Hermes</span><span>Codex</span><span>Claude Code</span><span>OpenCode</span><span>Kanban</span></div>
     </section>
 
     <section class="content-grid">
-      <article class="panel span-2">
-        <h2>中文整理</h2>
-        <p>這個技能是一套多代理開發方法：先由主代理界定目標與完成定義，再把可獨立處理的子任務委派給其他代理或 CLI，最後由主代理整合、驗證、提交。它強調隔離、可觀測、可回復，而不是讓多個代理同時亂改同一個工作區。</p>
+      <article class="panel span-2 content-policy">
+        <h2>內容策略：忠實翻譯 + 好讀排版</h2>
+        <p>此頁依照 Autonomous Agent Workflows 的 source SKILL.md 翻譯：Overview、Decision Flow、External coding CLIs、OpenCode API lane/API mode、Hermes profiles and model providers、Multi-agent agency teams、支援檔與 Verification Checklist。</p>
+        <p class="muted">本頁不是自由重寫或摘要；每個主要章節都對應來源 SKILL.md 的章節、清單、命令、檢查表或支援檔資訊。</p>
       </article>
       <aside class="panel source-card">
         <h2>來源資訊</h2>
@@ -43,32 +45,21 @@
           <dt>版本</dt><dd>1.0.0</dd>
         </dl>
       </aside>
-
       <article class="panel">
-        <h2>何時使用</h2>
-        <ul><li>任務可以拆成多個互不衝突的子工作，例如前端、後端、測試、文件或調研。</li><li>需要快速探索多個方案，或讓一個代理實作、另一個代理 review。</li><li>需要長時間背景工作，但仍要主代理掌握狀態與最終品質。</li></ul>
+        <h2>來源章節對照</h2>
+        <ul><li>Overview：代理委派與 profile setup 的 umbrella。</li><li>Decision Flow：選擇短期 delegate_task、durable Kanban 或外部 agent CLI。</li><li>Lanes：External coding CLIs、OpenCode API lane/API mode、Hermes profiles/model providers、多代理 agency teams。</li><li>Support files：保留被吸收 skill 的參考檔。</li><li>Verification Checklist：確認 agent/profile/CLI、context、artifact、外部副作用與追蹤方式。</li></ul>
       </article>
-      <article class="panel">
-        <h2>不建議使用情境</h2>
-        <ul><li>任務很小，單一代理直接完成比較快。</li><li>變更高度耦合，平行實作會造成 merge 衝突。</li><li>沒有測試或驗收標準，代理結果無法可靠判斷。</li></ul>
-      </article>
-      <article class="panel span-2">
-        <h2>建議流程</h2>
-        <ul><li>定義成果：列出要交付的檔案、行為、測試與不做事項。</li><li>拆分任務：每個子任務都應有清楚輸入、輸出與邊界。</li><li>選擇執行方式：短任務可用 Hermes delegation；需要完整 CLI 能力時用 Codex/Claude Code/OpenCode。</li><li>隔離工作區：使用 branch、worktree 或獨立 repo clone，避免代理互踩。</li><li>收斂結果：讀取每個代理摘要，但以實際 diff、測試與檔案內容為準。</li><li>整合與驗證：主代理負責最後修整、跑測試、commit、PR 與回報。</li></ul>
-      </article>
-      <article class="panel span-2">
-        <h2>命令範例</h2>
-        <div class="commands"><article class="command-card"><h3>Hermes 一次性子代理</h3><pre><code>hermes chat -q &quot;請檢查這個 repo 的登入流程並寫出風險摘要。&quot;</code></pre></article><article class="command-card"><h3>使用 worktree 隔離平行開發</h3><pre><code>git worktree add ../feature-a -b feat/feature-a</code></pre></article><article class="command-card"><h3>整合前檢查</h3><pre><code>git diff --stat &amp;&amp; git status --short</code></pre></article></div>
-      </article>
-      <article class="panel span-2">
-        <h2>注意事項</h2>
-        <ul><li>多代理不是免審核。主代理仍要檢查每個結果是否符合需求。</li><li>任務描述要包含完成定義，否則代理會用自己的假設填空。</li><li>能用小步驗證就不要一次丟巨大任務；可觀測性比一次生成大量程式碼更重要。</li></ul>
+      <article class="panel span-2 translated-section"><div class="section-number">01</div><h2>總覽</h2><p class="source-heading">對應來源章節：Overview</p><p>這是 agent delegation 與 profile setup 的 umbrella skill。當使用者要跑 coding agent、建立 AI software-agency team、設定 agent fleet 的模型/profile，或要在 Claude Code、Codex、OpenCode、Hermes subagents/Kanban 之間選擇時使用。</p></article><article class="panel span-2 translated-section"><div class="section-number">02</div><h2>決策流程</h2><p class="source-heading">對應來源章節：Decision Flow</p><ol><li>先判斷工作是短期 reasoning（<code>delegate_task</code>）、durable cross-profile work（Kanban），還是 external agent CLI job。</li><li>指派前驗證選定 CLI 或 profile 真的存在。</li><li>傳入 self-contained context：repo path、goal、constraints、tests、branch/PR expectations、output contract。</li><li>要求 child agents 回傳可驗證 handles：file paths、diffs、test output、PR URLs、run IDs。</li><li>回報成功前，自己驗證 external side effects。</li></ol></article><article class="panel span-2 translated-section"><div class="section-number">03</div><h2>External coding CLIs lane</h2><p class="source-heading">對應來源章節：External coding CLIs</p><p>當使用者明確要求某個 agent，或 repo-local CLI workflow 是正確 execution substrate 時，才使用 Claude Code、Codex 或 OpenCode。執行方式要 bounded、inspectable，並保存輸出；變更必須用 git diff/tests 驗證。</p></article><article class="panel span-2 translated-section"><div class="section-number">04</div><h2>OpenCode API lane / API mode</h2><p class="source-heading">對應來源章節：OpenCode API lane / OpenCode API mode</p><p>OpenCode 可不經 TUI，由 <code>opencode serve</code> 或 <code>npx -y opencode-ai serve</code> 啟動 HTTP/OpenAPI 服務；可用 <code>/doc</code>、<code>/global/health</code>、<code>/session</code>、<code>/session/{sessionID}/message</code> 等 endpoint。當 Hermes/Kanban integration 需要 resident server、session control、event/message polling 時，優先考慮這條 lane。</p><p>OpenCode 也可搭配 <code>@opencode-ai/sdk</code> 與 <code>opencode run --attach</code> 做程式化控制；如果 worker 需要 durable、可檢查的 OpenCode lane，這比單純 one-shot CLI 更合適。</p></article><article class="panel span-2 translated-section"><div class="section-number">05</div><h2>Hermes profiles 與 model providers</h2><p class="source-heading">對應來源章節：Hermes profiles and model providers</p><p>profile setup、custom providers、Databricks Model Serving endpoints、per-profile model routing 都走這條 lane。完成設定後，要用 <code>hermes -p &lt;profile&gt; model</code> 或最小 profile run 驗證。</p></article><article class="panel span-2 translated-section"><div class="section-number">06</div><h2>多代理 agency teams 與 profile handoff</h2><p class="source-heading">對應來源章節：Multi-agent agency teams</p><p>設計 team 時保持小而明確：先探索現有 profiles，再記錄 planning、implementation、review、research、operations 各由哪個 profile 負責。</p><p>當使用者要求把對話轉交給某個 team role/profile（例如 <code>pm</code>/Ava）時，應優先嘗試真實 profile/agent handoff：one-shot profile call、Kanban durable work，或短期 role-isolated <code>delegate_task</code>。聲稱 handoff 成功前，要確認 profile 能實際啟動；若 auth、rate limit 或設定阻塞，要明講並使用暫時 fallback，不可假裝 profile 已跑。</p></article><article class="panel span-2 translated-section"><div class="section-number">07</div><h2>支援檔與驗證清單</h2><p class="source-heading">對應來源章節：Support files / Verification Checklist</p><p>source skill 指出 absorbed skills 可能帶有 AI agency roster、Databricks Hermes profiles、OpenCode HTTP API 等參考檔；頁尾列出本機來源目錄實際可找到的支援檔。</p><ul class="checklist"><li>選定 agent/profile/CLI 存在且可啟動。</li><li>prompt/context 是 self-contained。</li><li>output contract 要求可驗證 artifacts。</li><li>parent agent 獨立驗證 claimed changes。</li><li>長時間工作使用 durable tracking，而不是未追蹤 shell process。</li></ul></article>
+      <article class="panel span-2 support-files">
+        <h2>支援檔資訊</h2>
+        <p class="muted">這些是來源 skill 目錄中 `SKILL.md` 以外的檔案；HTML 只列出檔名與用途提示，不直接貼整份英文內容。</p>
+        <ul><li>references/ai-agency-team-setup/software-agency-roster.md</li><li>references/databricks-hermes-profiles/databricks-gpt-oss-structured-content.md</li><li>references/opencode-http-api.md</li></ul>
       </article>
     </section>
 
   </main>
   <footer class="site-footer">
-    <p>繁體中文整理版。最後產生：由 scripts/update_skill_html.py 產生</p>
+    <p>繁體中文整理版。由 scripts/update_skill_html.py 產生</p>
   </footer>
 </body>
 </html>

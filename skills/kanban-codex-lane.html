@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="這個技能描述在 Hermes Kanban 架構中，如何把某張卡片交給 Codex CLI lane。Kanban 負責任務狀態、指派與留言；Codex 負責在 repo 中實作。關鍵是 worker 必須先讀卡片、確認範圍，再把足夠上下文轉成 Codex 任務，最後把測試結果與阻塞原因回寫到 kanban。">
+  <meta name="description" content="此頁忠實保留 Kanban Codex Lane skill 的結構：Overview、何時使用與何時不用、所有權規則、worktree/branch pattern、能力檢查、模式選擇、prompt 建構、監控與 kill、reconciliation checklist、kanban_complete metadata schema、常見陷阱與驗證清單。">
   <title>Kanban Codex Lane｜Skill HTML</title>
   <link rel="stylesheet" href="../assets/style.css">
   <script src="../assets/app.js" defer></script>
@@ -11,6 +11,7 @@
 <body>
   <header class="site-header">
     <a class="brand" href="../index.html">Skill HTML</a>
+    <button class="theme-toggle" type="button" aria-label="切換深色模式" aria-pressed="false">深色</button>
     <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav">選單</button>
     <nav id="site-nav" class="site-nav">
       <a href="../index.html">首頁</a>
@@ -25,14 +26,15 @@
     <section class="hero skill-hero">
       <p class="eyebrow">多代理 Kanban 工作流</p>
       <h1>Kanban Codex Lane</h1>
-      <p class="subtitle">讓 Hermes Kanban worker 把被指派的卡片轉交給 Codex CLI 執行。</p>
-      <div class="tags"><span>Kanban</span><span>Codex</span><span>Worker</span><span>任務隊列</span><span>自動化</span></div>
+      <p class="subtitle">Hermes Kanban worker 需要把明確實作交給 Codex CLI 時使用的雙 lane 約定。</p>
+      <div class="tags"><span>Kanban</span><span>Codex</span><span>Worker</span><span>Worktree</span><span>自動化</span></div>
     </section>
 
     <section class="content-grid">
-      <article class="panel span-2">
-        <h2>中文整理</h2>
-        <p>這個技能描述在 Hermes Kanban 架構中，如何把某張卡片交給 Codex CLI lane。Kanban 負責任務狀態、指派與留言；Codex 負責在 repo 中實作。關鍵是 worker 必須先讀卡片、確認範圍，再把足夠上下文轉成 Codex 任務，最後把測試結果與阻塞原因回寫到 kanban。</p>
+      <article class="panel span-2 content-policy">
+        <h2>內容策略：忠實翻譯 + 好讀排版</h2>
+        <p>此頁忠實保留 Kanban Codex Lane skill 的結構：Overview、何時使用與何時不用、所有權規則、worktree/branch pattern、能力檢查、模式選擇、prompt 建構、監控與 kill、reconciliation checklist、kanban_complete metadata schema、常見陷阱與驗證清單。</p>
+        <p class="muted">本頁不是自由重寫或摘要；每個主要章節都對應來源 SKILL.md 的章節、清單、命令、檢查表或支援檔資訊。</p>
       </article>
       <aside class="panel source-card">
         <h2>來源資訊</h2>
@@ -43,32 +45,43 @@
           <dt>版本</dt><dd>1.0.0</dd>
         </dl>
       </aside>
+      <article class="panel">
+        <h2>來源章節對照</h2>
+        <ul><li>Overview：Hermes 擁有任務生命週期；Codex 只是輸入 lane。</li><li>When to Use：適合清楚、有界、可測試的程式或文件任務。</li><li>Ownership Rules：Hermes 擁有 Kanban、驗收、測試、安全、清理。</li><li>Required Worktree and Branch Pattern：不可在共享 dirty checkout 直接跑。</li><li>Codex Capability Checks：檢查 Codex CLI、版本與必要 feature。</li><li>Mode Selection：bounded edits 用 <code>codex exec</code>，更大目標才用 <code>/goal</code>。</li><li>Prompt Construction：任務、範圍、安全、輸出合約與測試都要寫入。</li><li>Monitoring, Timeout, and Kill Behavior：背景 PTY、heartbeat、kill 條件。</li><li>Reconciliation Checklist：Hermes 檢查 status、diff、安全、測試與採納範圍。</li><li>kanban_complete Metadata Schema：完成回寫需包含 codex_lane metadata。</li><li>Common Pitfalls / Verification Checklist：避免相信自述、避免 dirty checkout、避免擴大 scope。</li></ul>
+      </article>
+      <article class="panel span-2 translated-section"><div class="section-number">01</div><h2>總覽：Hermes 擁有任務，Codex 是輸入 lane</h2><p class="source-heading">對應來源章節：Overview</p><p>這個 skill 定義輕量 Hermes + Codex 雙 lane 慣例。Hermes worker 永遠是任務 owner：讀取 Kanban 卡片、判斷 Codex 是否適合、建立或選擇隔離 workspace、啟動與監控 Codex、檢查 diff、執行驗證，最後由 Hermes 回寫 complete 或 block。</p><aside class="callout"><strong>不要誤解</strong><p>Codex output 不是 task completion signal、不是 trusted reviewer，也不應直接寫入 durable Kanban state。</p></aside></article><article class="panel span-2 translated-section"><div class="section-number">02</div><h2>何時使用 / 何時不要使用</h2><p class="source-heading">對應來源章節：When to Use</p><ul class="checklist"><li>Kanban task 是 coding、refactor、documentation、test 或 mechanical migration。</li><li>有清楚 acceptance criteria。</li><li>Hermes 可以在一個 run 內評估 bounded diff。</li><li>repo 可以複製或建立隔離 git worktree/branch。</li><li>Codex 結束後，Hermes 可以自行跑相關測試。</li><li>prompt 能寫清楚安全限制和不得變更的檔案。</li></ul><ul><li>不要在需要未記錄的人類判斷時使用。</li><li>不要在 worker 缺 repo access、Codex auth 或沒有時間 reconcile 時使用。</li><li>不要碰 secrets、credential stores、private user data 或 production order-entry systems。</li><li>小型直接修改更快更安全時不要啟動另一個代理。</li><li>research-only 任務應產出 handoff，而不是 diff。</li><li>絕不可只根據 Codex 自述就標 Done。</li></ul></article><article class="panel span-2 translated-section"><div class="section-number">03</div><h2>所有權規則</h2><p class="source-heading">對應來源章節：Ownership Rules</p><ol><li>Hermes 擁有 Kanban lifecycle；Codex 不得代替 worker 呼叫 complete/block/create 或 board CLI。</li><li>Hermes 擁有最終接受權；Codex commits/diffs 在 review 和 verify 前都視為 untrusted patches。</li><li>Hermes 擁有測試；Codex 可跑測試，但只是 advisory，Hermes 必須重跑 canonical verification。</li><li>Hermes 擁有安全；若 Codex 變更 safety boundaries、risk gates、live trading behavior 或 secrets handling，即使測試過也拒絕。</li><li>Hermes 擁有清理；卡住的 Codex process 和臨時 worktree 都要處理。</li></ol></article><article class="panel span-2 translated-section"><div class="section-number">04</div><h2>必要 worktree 與 branch pattern</h2><p class="source-heading">對應來源章節：Required Worktree and Branch Pattern</p><p>不要在共享的 dirty checkout 直接跑 Codex。branch/worktree 名稱要能追溯到 Kanban task，讓未信任 edits 留在隔離區。</p><div class="code-block"><h3>推薦變數與建立隔離 lane</h3><pre><code>TASK_ID=&quot;${HERMES_KANBAN_TASK:-t_manual}&quot;
+REPO=&quot;/path/to/repo&quot;
+BASE=&quot;$(git -C &quot;$REPO&quot; rev-parse --abbrev-ref HEAD)&quot;
+SAFE_TASK=&quot;$(printf &#x27;%s&#x27; &quot;$TASK_ID&quot; | tr -cd &#x27;[:alnum:]_-&#x27;)&quot;
+BRANCH=&quot;codex/${SAFE_TASK}/$(date -u +%Y%m%d%H%M%S)&quot;
+WORKTREE=&quot;/tmp/${SAFE_TASK}-codex-lane&quot;
 
-      <article class="panel">
-        <h2>何時使用</h2>
-        <ul><li>任務已經在 Hermes Kanban board 上，並且適合交給 Codex 做 repo 內修改。</li><li>需要多個 worker 平行處理不同卡片，同時保留任務狀態與審計紀錄。</li><li>希望 Codex lane 只處理程式碼實作，協調與驗收仍由 Kanban/orchestrator 管理。</li></ul>
-      </article>
-      <article class="panel">
-        <h2>不建議使用情境</h2>
-        <ul><li>卡片沒有明確 acceptance criteria。</li><li>任務需要跨多個 repo 或人工產品決策，Codex lane 無法獨立完成。</li><li>工作區沒有乾淨 branch/worktree，可能與其他 worker 衝突。</li></ul>
-      </article>
-      <article class="panel span-2">
-        <h2>建議流程</h2>
-        <ul><li>讀取目前 kanban task：了解目標、連結、留言、阻塞狀態與驗收條件。</li><li>檢查 repo 與 branch：確保 worker 在正確工作目錄，並確認沒有未預期變更。</li><li>組裝 Codex prompt：包含卡片內容、可改範圍、測試命令、禁止事項、回報格式。</li><li>執行 Codex CLI：讓 Codex 實作、跑測試、輸出摘要。</li><li>審核 diff 與測試：worker 必須自己檢查，不可只轉貼 Codex 的成功訊息。</li><li>更新 kanban：成功就附上 commit/測試結果並 complete；失敗就 block，寫清楚缺什麼。</li></ul>
-      </article>
-      <article class="panel span-2">
-        <h2>命令範例</h2>
-        <div class="commands"><article class="command-card"><h3>Codex lane 任務執行範例</h3><pre><code>codex exec --full-auto &quot;你是 kanban worker。請依照卡片內容完成實作，限制只改相關檔案，跑測試並回報結果。&quot;</code></pre></article><article class="command-card"><h3>完成後檢查變更</h3><pre><code>git status --short &amp;&amp; git diff --stat</code></pre></article><article class="command-card"><h3>常見驗證命令樣式</h3><pre><code>python -m pytest tests/ -q</code></pre></article></div>
-      </article>
-      <article class="panel span-2">
-        <h2>注意事項</h2>
-        <ul><li>Kanban 狀態是事實來源；Codex 只是執行器。任何成功、失敗、阻塞都要回寫卡片。</li><li>不要讓 Codex 自行擴大範圍。prompt 要明確列出不應修改的區域。</li><li>若 Codex 產生不可信變更，worker 應停止並 block，而不是硬 merge。</li></ul>
+git -C &quot;$REPO&quot; fetch --all --prune
+git -C &quot;$REPO&quot; worktree add -b &quot;$BRANCH&quot; &quot;$WORKTREE&quot; &quot;$BASE&quot;
+git -C &quot;$WORKTREE&quot; status --short --branch</code></pre></div><p>若目前 Kanban workspace 本身已經是此任務的隔離 worktree，且 <code>git status --short</code> 乾淨，只能在這個安全前提下建立 sibling Codex branch。否則另建臨時 worktree，reconciliation 後再 cherry-pick 或 copy accepted commits。</p></article><article class="panel span-2 translated-section"><div class="section-number">05</div><h2>Codex 能力檢查與模式選擇</h2><p class="source-heading">對應來源章節：Codex Capability Checks / Mode Selection</p><div class="commands"><article class="command-card"><h3>能力檢查</h3><pre><code>command -v codex
+codex --version
+codex features list | grep -i goals || true</code></pre></article><article class="command-card"><h3>需要 /goal 時才開 feature</h3><pre><code>codex features enable goals || true
+codex --enable goals --version</code></pre></article></div><p>bounded one-shot edits 用 <code>codex exec</code>。更廣、需要 durable objective tracking 的任務才使用 Codex <code>/goal</code>。Prediction-market-bot 或安全敏感 repo 不要用 <code>--yolo</code>；優先在隔離 worktree 中用 <code>--full-auto</code>，再由 Hermes reconcile。</p></article><article class="panel span-2 translated-section"><div class="section-number">06</div><h2>Prompt 建構</h2><p class="source-heading">對應來源章節：Prompt Construction</p><ul class="checklist"><li>包含 <code>task_id</code>、標題與完整 Kanban acceptance criteria。</li><li>包含 repo path、worktree path、branch name 與 allowed file scope。</li><li>明確寫入：Hermes owns Kanban lifecycle；Codex is an input lane only。</li><li>要求輸出 concise summary、files changed、commits、tests run、known risks。</li><li>禁止 secrets access、external messaging、board mutation、unrelated refactors、非必要 dependency upgrades。</li><li>列出 Codex 可跑的驗證命令與 Hermes 之後會跑的命令。</li></ul><aside class="callout"><strong>PMB 安全限制</strong><p>若是 prediction-market-bot，prompt 必須保留 paper-only、禁止 market orders、禁止 bypass price/risk checks、禁止 fake fills/PnL/order states、不得 weaken risk gates/kill switches、不得讀寫 secrets 等 safety constraints。</p></aside></article><article class="panel span-2 translated-section"><div class="section-number">07</div><h2>監控、逾時與 kill 條件</h2><p class="source-heading">對應來源章節：Monitoring, Timeout, and Kill Behavior</p><div class="code-block"><h3>背景啟動與監控</h3><pre><code>result = terminal(
+    command=&quot;codex exec --full-auto &#x27;$(cat /tmp/codex_prompt.md)&#x27;&quot;,
+    workdir=WORKTREE,
+    background=True,
+    pty=True,
+    notify_on_complete=True,
+)
+session_id = result[&quot;session_id&quot;]
+process(action=&quot;poll&quot;, session_id=session_id)
+process(action=&quot;log&quot;, session_id=session_id, limit=200)
+process(action=&quot;wait&quot;, session_id=session_id, timeout=300)</code></pre></div><ul><li>超過兩分鐘的 lane，定期送 Kanban heartbeat。</li><li>若 Codex 要求 secrets、production credentials 或 external permissions，立即 kill。</li><li>若它修改 worktree 外檔案、做無關重寫、剩餘 runtime 不足或沒有有用輸出，也應 kill。</li><li>kill 後檢查 <code>git status --short</code>，只保留安全且有用的 patch，並記錄 rejected/timed_out 原因。</li></ul></article><article class="panel span-2 translated-section"><div class="section-number">08</div><h2>Reconciliation 與完成 metadata</h2><p class="source-heading">對應來源章節：Reconciliation Checklist / kanban_complete Metadata Schema</p><ul class="checklist"><li><code>git -C &lt;WORKTREE&gt; status --short --branch</code> 只顯示預期檔案。</li><li>Hermes 已 review <code>diff --stat</code> 與 <code>git diff</code>。</li><li>沒有 secrets、credentials、generated caches、無關資料或 local artifacts。</li><li>安全約束仍保留。</li><li>Codex commits 足夠小，可以 cherry-pick 或 squash。</li><li>Hermes 以 repo canonical wrapper 重跑測試。</li><li>Codex-run tests 與 Hermes-run tests 分開列。</li><li>accepted diff 已套用到 Hermes-owned workspace/branch。</li><li>rejected/partial work 有具體理由與 artifact path。</li></ul><p><code>kanban_complete.metadata.codex_lane</code> 需描述 used、mode、worktree、branch、command、result、accepted_commits、rejected_reason、tests_run 與 artifacts。若跳過 Codex，也要用 <code>used: false</code> 和具體 skipped/rejected reason 交代。</p></article><article class="panel span-2 translated-section"><div class="section-number">09</div><h2>常見陷阱與驗證清單</h2><p class="source-heading">對應來源章節：Common Pitfalls / Verification Checklist</p><ul><li>把 Codex 自述當驗證。</li><li>在使用者 dirty main checkout 裡跑 Codex。</li><li>讓 Codex 擁有 Kanban lifecycle。</li><li>忘記在 prompt 中放 safety invariants。</li><li>快速 edits 卻使用 <code>/goal</code>。</li><li>kill 後沒有記錄原因。</li><li>因為 tests pass 就接受無關 cleanup。</li></ul><ul class="checklist"><li>Codex 已檢查或明確 skipped。</li><li>只在隔離 worktree/branch 跑。</li><li>prompt 包含 scope、ownership、safety、verification commands。</li><li>Hermes 已 review diff 與安全敏感檔案。</li><li>Hermes 已獨立跑 canonical tests。</li><li><code>metadata.codex_lane</code> 符合 schema。</li><li>臨時 process/worktree 已清理或記錄為 artifact。</li></ul></article>
+      <article class="panel span-2 support-files">
+        <h2>支援檔資訊</h2>
+        <p class="muted">這些是來源 skill 目錄中 `SKILL.md` 以外的檔案；HTML 只列出檔名與用途提示，不直接貼整份英文內容。</p>
+        <ul><li>templates/pmb-codex-lane-prompt.md</li></ul>
       </article>
     </section>
 
   </main>
   <footer class="site-footer">
-    <p>繁體中文整理版。最後產生：由 scripts/update_skill_html.py 產生</p>
+    <p>繁體中文整理版。由 scripts/update_skill_html.py 產生</p>
   </footer>
 </body>
 </html>

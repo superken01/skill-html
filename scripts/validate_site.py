@@ -12,6 +12,7 @@ REQUIRED = [
     ROOT / "skills" / "codex.html",
     ROOT / "skills" / "kanban-codex-lane.html",
     ROOT / "skills" / "autonomous-agent-workflows.html",
+    ROOT / "skills" / "kanban-operations.html",
     ROOT / "skills" / "hermes-agent.html",
     ROOT / "assets" / "style.css",
     ROOT / "assets" / "app.js",
@@ -52,6 +53,13 @@ def main() -> int:
         if not path.exists():
             errors.append(f"missing required file: {path.relative_to(ROOT)}")
 
+    css = (ROOT / "assets" / "style.css").read_text(encoding="utf-8") if (ROOT / "assets" / "style.css").exists() else ""
+    js = (ROOT / "assets" / "app.js").read_text(encoding="utf-8") if (ROOT / "assets" / "app.js").exists() else ""
+    if "prefers-color-scheme: dark" not in css or "data-theme=\"dark\"" not in css:
+        errors.append("assets/style.css missing dark mode support")
+    if "localStorage" not in js or "theme-toggle" not in js:
+        errors.append("assets/app.js missing persisted manual theme toggle")
+
     for path in sorted([ROOT / "index.html", *(ROOT / "skills").glob("*.html")]):
         text = path.read_text(encoding="utf-8")
         parser = LinkParser()
@@ -60,8 +68,12 @@ def main() -> int:
             errors.append(f"{path.relative_to(ROOT)} does not declare lang=zh-Hant")
         if not parser.has_viewport:
             errors.append(f"{path.relative_to(ROOT)} missing responsive viewport meta")
-        if "中文整理" not in text and "繁體中文導覽" not in text:
+        if "繁體中文" not in text:
             errors.append(f"{path.relative_to(ROOT)} does not look localized")
+        if path.name != "index.html" and "內容策略：忠實翻譯 + 好讀排版" not in text:
+            errors.append(f"{path.relative_to(ROOT)} missing content fidelity policy")
+        if "theme-toggle" not in text:
+            errors.append(f"{path.relative_to(ROOT)} missing dark mode toggle")
         for link in parser.links:
             target = local_path(link, path)
             if target is not None and not target.exists():

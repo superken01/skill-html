@@ -1,255 +1,461 @@
 {
   "codex": {
     "title": "Codex CLI 開發代理",
-    "subtitle": "把單一功能、修 bug、PR review 交給 OpenAI Codex CLI 執行的工作流。",
+    "subtitle": "把功能、修 bug、重構、PR review 或批次 issue 修正交給 OpenAI Codex CLI 的工作流。",
     "category": "自主 AI 開發代理",
     "tags": ["Codex", "CLI", "程式開發", "PR", "自動化"],
-    "summary": "這個技能用來啟動與管理 Codex CLI，讓它在獨立工作目錄中完成明確的開發任務。重點不是把需求丟出去就放任不管，而是先界定範圍、提供必要上下文、要求測試與提交紀錄，再由 Ethan 檢查輸出與整合結果。",
-    "use_when": [
-      "有明確可切分的程式任務，例如新增一個 endpoint、修一個錯誤、補測試或整理文件。",
-      "需要讓另一個代理平行探索或實作，但仍希望最後由目前工作流審核。",
-      "想用 Codex 擅長的 repo 內編輯與命令執行能力，加速重複性開發工作。"
+    "summary": "此頁依照 Codex CLI skill 的原始章節翻譯整理：保留何時使用、必要條件、一次性任務、長任務背景模式、重要 flags、Gateway 沙盒注意事項、PR review、worktree 平行修 issue、批次 PR review 與操作規則。",
+    "source_outline_zh": [
+      "Codex CLI：透過 Hermes terminal 委派程式任務。",
+      "When to use：功能、重構、PR review、批次 issue 修正。",
+      "Prerequisites：Codex 安裝、認證、git repo、PTY。",
+      "One-Shot Tasks：使用 `codex exec` 執行可結束的一次性任務。",
+      "Background Mode：長任務用背景 PTY，透過 process 監控、送入、停止。",
+      "Key Flags：`exec`、`--full-auto`、`--yolo`、`--sandbox danger-full-access`。",
+      "Hermes Gateway Caveat：服務環境下 sandbox 可能失敗，需改用 danger-full-access 並加強流程邊界。",
+      "PR Reviews / Parallel Issue Fixing / Batch PR Reviews：隔離 checkout 或 worktree、檢查 diff、建立 PR。",
+      "Rules：PTY、git repo、one-shot、背景監控、不要干擾、可平行。"
     ],
-    "avoid_when": [
-      "需求還很模糊，尚未定義成功條件或檔案範圍。",
-      "任務會改動憑證、部署、付款或刪除資料等高風險資源。",
-      "目前 repo 有未提交的重要變更，尚未隔離 branch 或 worktree。"
-    ],
-    "workflow": [
-      "確認 repo 狀態：先看 git status，避免 Codex 覆蓋人工未提交變更。",
-      "建立清楚任務說明：包含目標、可改檔案、不可改事項、測試命令、完成回報格式。",
-      "以 Codex CLI 執行：短任務可前景執行，長任務用背景程序並開啟完成通知。",
-      "讀取 Codex 回報與 git diff：不要直接相信摘要，要實際檢查變更。",
-      "跑測試與 lint：至少執行任務相關測試，必要時跑完整驗證。",
-      "由 Ethan commit 或要求 Codex 產出可審核 commit，再進 PR workflow。"
-    ],
-    "commands": [
+    "translated_sections": [
       {
-        "label": "一次性委派範例",
-        "command": "codex exec --full-auto \"請在目前 repo 實作登入錯誤訊息修正，先跑相關測試，最後回報變更與測試結果。\""
+        "heading": "用途與定位",
+        "source_heading": "Codex CLI / When to use",
+        "blocks": [
+          {"type": "paragraph", "text": "Codex CLI 是 OpenAI 的自主 coding agent CLI。這個 skill 的用途是：當任務已經足夠明確，而且目前工作區是一個 git repository 時，透過 Hermes terminal 將可驗證的程式任務委派給 Codex。"},
+          {"type": "list", "items": ["建立功能。", "重構既有程式。", "進行 PR review。", "批次修正多個 issue。"]},
+          {"type": "callout", "title": "核心原則", "text": "Codex 的輸出是候選變更，不是完成聲明；最後仍要由目前代理檢查 diff、跑測試、決定是否採納。"}
+        ]
       },
       {
-        "label": "指定模型與工作目錄",
-        "command": "cd /path/to/repo && codex exec --model gpt-5.1-codex --full-auto \"依照 issue 描述補上單元測試與修正。\""
+        "heading": "必要條件",
+        "source_heading": "Prerequisites",
+        "blocks": [
+          {"type": "checklist", "items": ["已安裝 Codex：`npm install -g @openai/codex`。", "OpenAI 認證已設定；可以是 `OPENAI_API_KEY`，也可以是 Codex CLI login 產生的 OAuth credentials。", "必須在 git repository 裡執行；Codex 不接受非 git 目錄。", "Hermes terminal 呼叫 Codex 時使用 `pty=true`，因為 Codex 是互動式終端程式。"]},
+          {"type": "paragraph", "text": "Hermes 自己的 `openai-codex` provider 會使用 Hermes 管理的 OAuth；獨立 Codex CLI 可能使用 `~/.codex/auth.json`。不要只因為缺少 `OPENAI_API_KEY` 就判定 Codex 無法登入。"}
+        ]
       },
       {
-        "label": "檢查 Codex 造成的變更",
-        "command": "git status --short && git diff --stat && git diff"
+        "heading": "一次性任務與 scratch 工作",
+        "source_heading": "One-Shot Tasks",
+        "blocks": [
+          {"type": "paragraph", "text": "短任務優先使用 `codex exec`，讓 Codex 在完成後自行結束。若只是臨時探索，也要建立臨時 git repo，因為 Codex 需要 git repository。"},
+          {"type": "commands", "items": [
+            {"label": "在專案中執行一次性任務", "command": "terminal(command=\"codex exec 'Add dark mode toggle to settings'\", workdir=\"~/project\", pty=true)"},
+            {"label": "scratch 目錄仍先 git init", "command": "terminal(command=\"cd $(mktemp -d) && git init && codex exec 'Build a snake game in Python'\", pty=true)"}
+          ]}
+        ]
+      },
+      {
+        "heading": "長任務背景模式",
+        "source_heading": "Background Mode (Long Tasks)",
+        "blocks": [
+          {"type": "steps", "items": ["用 `background=true` 和 `pty=true` 啟動 Codex 長任務。", "保存回傳的 `session_id`。", "用 `process(action=\"poll\")` 或 `process(action=\"log\")` 檢查進度。", "如果 Codex 提問，用 `process(action=\"submit\")` 回覆。", "需要停止時，用 `process(action=\"kill\")`。"]},
+          {"type": "code", "label": "背景啟動與監控樣式", "code": "terminal(command=\"codex exec --full-auto 'Refactor the auth module'\", workdir=\"~/project\", background=true, pty=true)\nprocess(action=\"poll\", session_id=\"<id>\")\nprocess(action=\"log\", session_id=\"<id>\")\nprocess(action=\"submit\", session_id=\"<id>\", data=\"yes\")\nprocess(action=\"kill\", session_id=\"<id>\")"}
+        ]
+      },
+      {
+        "heading": "重要 flags 與 Gateway 沙盒注意事項",
+        "source_heading": "Key Flags / Hermes Gateway Caveat",
+        "blocks": [
+          {"type": "table", "rows": [
+            {"Flag": "`exec \"prompt\"`", "用途": "一次性執行，完成後離開。"},
+            {"Flag": "`--full-auto`", "用途": "在 sandbox 中自動批准 workspace 內的檔案修改。"},
+            {"Flag": "`--yolo`", "用途": "不使用 sandbox、略過 approval；最快但風險最高。"},
+            {"Flag": "`--sandbox danger-full-access`", "用途": "當 Hermes gateway/service context 讓 workspace-write sandbox 失敗時使用。"}
+          ]},
+          {"type": "paragraph", "text": "在 Telegram/gateway 這類 service context 呼叫 Codex 時，bubblewrap 或 user namespace 可能因權限不足而失敗。若遇到 `uid map` 或 `loopback` 類錯誤，可改用 `--sandbox danger-full-access`，但要用乾淨 git status、明確 workdir、窄範圍 prompt、diff review 與測試作為安全邊界。"}
+        ]
+      },
+      {
+        "heading": "PR review、worktree 平行修正與批次 review",
+        "source_heading": "PR Reviews / Parallel Issue Fixing with Worktrees / Batch PR Reviews",
+        "blocks": [
+          {"type": "list", "items": ["PR review：clone 到暫存目錄、checkout PR，再讓 Codex review against base branch。", "平行 issue fixing：為每個 issue 建立獨立 worktree 與 branch，各自啟動 Codex，完成後推 branch 開 PR。", "批次 PR review：fetch PR refs，針對每個 PR 以背景 Codex 任務平行 review，最後再貼回評論。"]},
+          {"type": "commands", "items": [
+            {"label": "安全 PR review clone", "command": "REVIEW=$(mktemp -d) && git clone https://github.com/user/repo.git $REVIEW && cd $REVIEW && gh pr checkout 42 && codex review --base origin/main"},
+            {"label": "建立隔離 worktree", "command": "git worktree add -b fix/issue-78 /tmp/issue-78 main"},
+            {"label": "fetch PR refs", "command": "git fetch origin '+refs/pull/*/head:refs/remotes/origin/pr/*'"}
+          ]}
+        ]
+      },
+      {
+        "heading": "操作規則",
+        "source_heading": "Rules",
+        "blocks": [
+          {"type": "checklist", "items": ["一定使用 `pty=true`。", "一定在 git repo 內執行；scratch 也先 `git init`。", "短任務用 `codex exec`。", "需要實作時可用 `--full-auto`，但仍要檢查 diff。", "長任務用 background 並監控 process。", "不要頻繁干擾 Codex；只 poll/log 或必要時送入回覆。", "多個 Codex 任務可以平行，但應用 worktree 或獨立 branch 隔離。"]}
+        ]
       }
-    ],
-    "notes": [
-      "Codex 的輸出只是候選實作；完成前仍要由目前代理做 code review 與本地驗證。",
-      "任務 prompt 要明確要求不要改無關檔案，並要求列出測試命令與結果。",
-      "若需要與 Hermes 多代理並行，優先使用隔離 worktree 或獨立 branch，避免互相覆蓋。"
     ]
   },
   "kanban-codex-lane": {
     "title": "Kanban Codex Lane",
-    "subtitle": "讓 Hermes Kanban worker 把被指派的卡片轉交給 Codex CLI 執行。",
+    "subtitle": "Hermes Kanban worker 需要把明確實作交給 Codex CLI 時使用的雙 lane 約定。",
     "category": "多代理 Kanban 工作流",
-    "tags": ["Kanban", "Codex", "Worker", "任務隊列", "自動化"],
-    "summary": "這個技能描述在 Hermes Kanban 架構中，如何把某張卡片交給 Codex CLI lane。Kanban 負責任務狀態、指派與留言；Codex 負責在 repo 中實作。關鍵是 worker 必須先讀卡片、確認範圍，再把足夠上下文轉成 Codex 任務，最後把測試結果與阻塞原因回寫到 kanban。",
-    "use_when": [
-      "任務已經在 Hermes Kanban board 上，並且適合交給 Codex 做 repo 內修改。",
-      "需要多個 worker 平行處理不同卡片，同時保留任務狀態與審計紀錄。",
-      "希望 Codex lane 只處理程式碼實作，協調與驗收仍由 Kanban/orchestrator 管理。"
+    "tags": ["Kanban", "Codex", "Worker", "Worktree", "自動化"],
+    "summary": "此頁忠實保留 Kanban Codex Lane skill 的結構：Overview、何時使用與何時不用、所有權規則、worktree/branch pattern、能力檢查、模式選擇、prompt 建構、監控與 kill、reconciliation checklist、kanban_complete metadata schema、常見陷阱與驗證清單。",
+    "source_support_files": ["templates/pmb-codex-lane-prompt.md"],
+    "source_outline_zh": [
+      "Overview：Hermes 擁有任務生命週期；Codex 只是輸入 lane。",
+      "When to Use：適合清楚、有界、可測試的程式或文件任務。",
+      "Ownership Rules：Hermes 擁有 Kanban、驗收、測試、安全、清理。",
+      "Required Worktree and Branch Pattern：不可在共享 dirty checkout 直接跑。",
+      "Codex Capability Checks：檢查 Codex CLI、版本與必要 feature。",
+      "Mode Selection：bounded edits 用 `codex exec`，更大目標才用 `/goal`。",
+      "Prompt Construction：任務、範圍、安全、輸出合約與測試都要寫入。",
+      "Monitoring, Timeout, and Kill Behavior：背景 PTY、heartbeat、kill 條件。",
+      "Reconciliation Checklist：Hermes 檢查 status、diff、安全、測試與採納範圍。",
+      "kanban_complete Metadata Schema：完成回寫需包含 codex_lane metadata。",
+      "Common Pitfalls / Verification Checklist：避免相信自述、避免 dirty checkout、避免擴大 scope。"
     ],
-    "avoid_when": [
-      "卡片沒有明確 acceptance criteria。",
-      "任務需要跨多個 repo 或人工產品決策，Codex lane 無法獨立完成。",
-      "工作區沒有乾淨 branch/worktree，可能與其他 worker 衝突。"
-    ],
-    "workflow": [
-      "讀取目前 kanban task：了解目標、連結、留言、阻塞狀態與驗收條件。",
-      "檢查 repo 與 branch：確保 worker 在正確工作目錄，並確認沒有未預期變更。",
-      "組裝 Codex prompt：包含卡片內容、可改範圍、測試命令、禁止事項、回報格式。",
-      "執行 Codex CLI：讓 Codex 實作、跑測試、輸出摘要。",
-      "審核 diff 與測試：worker 必須自己檢查，不可只轉貼 Codex 的成功訊息。",
-      "更新 kanban：成功就附上 commit/測試結果並 complete；失敗就 block，寫清楚缺什麼。"
-    ],
-    "commands": [
+    "translated_sections": [
       {
-        "label": "Codex lane 任務執行範例",
-        "command": "codex exec --full-auto \"你是 kanban worker。請依照卡片內容完成實作，限制只改相關檔案，跑測試並回報結果。\""
+        "heading": "總覽：Hermes 擁有任務，Codex 是輸入 lane",
+        "source_heading": "Overview",
+        "blocks": [
+          {"type": "paragraph", "text": "這個 skill 定義輕量 Hermes + Codex 雙 lane 慣例。Hermes worker 永遠是任務 owner：讀取 Kanban 卡片、判斷 Codex 是否適合、建立或選擇隔離 workspace、啟動與監控 Codex、檢查 diff、執行驗證，最後由 Hermes 回寫 complete 或 block。"},
+          {"type": "callout", "title": "不要誤解", "text": "Codex output 不是 task completion signal、不是 trusted reviewer，也不應直接寫入 durable Kanban state。"}
+        ]
       },
       {
-        "label": "完成後檢查變更",
-        "command": "git status --short && git diff --stat"
+        "heading": "何時使用 / 何時不要使用",
+        "source_heading": "When to Use",
+        "blocks": [
+          {"type": "checklist", "items": ["Kanban task 是 coding、refactor、documentation、test 或 mechanical migration。", "有清楚 acceptance criteria。", "Hermes 可以在一個 run 內評估 bounded diff。", "repo 可以複製或建立隔離 git worktree/branch。", "Codex 結束後，Hermes 可以自行跑相關測試。", "prompt 能寫清楚安全限制和不得變更的檔案。"]},
+          {"type": "list", "items": ["不要在需要未記錄的人類判斷時使用。", "不要在 worker 缺 repo access、Codex auth 或沒有時間 reconcile 時使用。", "不要碰 secrets、credential stores、private user data 或 production order-entry systems。", "小型直接修改更快更安全時不要啟動另一個代理。", "research-only 任務應產出 handoff，而不是 diff。", "絕不可只根據 Codex 自述就標 Done。"]}
+        ]
       },
       {
-        "label": "常見驗證命令樣式",
-        "command": "python -m pytest tests/ -q"
+        "heading": "所有權規則",
+        "source_heading": "Ownership Rules",
+        "blocks": [
+          {"type": "steps", "items": ["Hermes 擁有 Kanban lifecycle；Codex 不得代替 worker 呼叫 complete/block/create 或 board CLI。", "Hermes 擁有最終接受權；Codex commits/diffs 在 review 和 verify 前都視為 untrusted patches。", "Hermes 擁有測試；Codex 可跑測試，但只是 advisory，Hermes 必須重跑 canonical verification。", "Hermes 擁有安全；若 Codex 變更 safety boundaries、risk gates、live trading behavior 或 secrets handling，即使測試過也拒絕。", "Hermes 擁有清理；卡住的 Codex process 和臨時 worktree 都要處理。"]}
+        ]
+      },
+      {
+        "heading": "必要 worktree 與 branch pattern",
+        "source_heading": "Required Worktree and Branch Pattern",
+        "blocks": [
+          {"type": "paragraph", "text": "不要在共享的 dirty checkout 直接跑 Codex。branch/worktree 名稱要能追溯到 Kanban task，讓未信任 edits 留在隔離區。"},
+          {"type": "code", "label": "推薦變數與建立隔離 lane", "code": "TASK_ID=\"${HERMES_KANBAN_TASK:-t_manual}\"\nREPO=\"/path/to/repo\"\nBASE=\"$(git -C \"$REPO\" rev-parse --abbrev-ref HEAD)\"\nSAFE_TASK=\"$(printf '%s' \"$TASK_ID\" | tr -cd '[:alnum:]_-')\"\nBRANCH=\"codex/${SAFE_TASK}/$(date -u +%Y%m%d%H%M%S)\"\nWORKTREE=\"/tmp/${SAFE_TASK}-codex-lane\"\n\ngit -C \"$REPO\" fetch --all --prune\ngit -C \"$REPO\" worktree add -b \"$BRANCH\" \"$WORKTREE\" \"$BASE\"\ngit -C \"$WORKTREE\" status --short --branch"},
+          {"type": "paragraph", "text": "若目前 Kanban workspace 本身已經是此任務的隔離 worktree，且 `git status --short` 乾淨，只能在這個安全前提下建立 sibling Codex branch。否則另建臨時 worktree，reconciliation 後再 cherry-pick 或 copy accepted commits。"}
+        ]
+      },
+      {
+        "heading": "Codex 能力檢查與模式選擇",
+        "source_heading": "Codex Capability Checks / Mode Selection",
+        "blocks": [
+          {"type": "commands", "items": [
+            {"label": "能力檢查", "command": "command -v codex\ncodex --version\ncodex features list | grep -i goals || true"},
+            {"label": "需要 /goal 時才開 feature", "command": "codex features enable goals || true\ncodex --enable goals --version"}
+          ]},
+          {"type": "paragraph", "text": "bounded one-shot edits 用 `codex exec`。更廣、需要 durable objective tracking 的任務才使用 Codex `/goal`。Prediction-market-bot 或安全敏感 repo 不要用 `--yolo`；優先在隔離 worktree 中用 `--full-auto`，再由 Hermes reconcile。"}
+        ]
+      },
+      {
+        "heading": "Prompt 建構",
+        "source_heading": "Prompt Construction",
+        "blocks": [
+          {"type": "checklist", "items": ["包含 `task_id`、標題與完整 Kanban acceptance criteria。", "包含 repo path、worktree path、branch name 與 allowed file scope。", "明確寫入：Hermes owns Kanban lifecycle；Codex is an input lane only。", "要求輸出 concise summary、files changed、commits、tests run、known risks。", "禁止 secrets access、external messaging、board mutation、unrelated refactors、非必要 dependency upgrades。", "列出 Codex 可跑的驗證命令與 Hermes 之後會跑的命令。"]},
+          {"type": "callout", "title": "PMB 安全限制", "text": "若是 prediction-market-bot，prompt 必須保留 paper-only、禁止 market orders、禁止 bypass price/risk checks、禁止 fake fills/PnL/order states、不得 weaken risk gates/kill switches、不得讀寫 secrets 等 safety constraints。"}
+        ]
+      },
+      {
+        "heading": "監控、逾時與 kill 條件",
+        "source_heading": "Monitoring, Timeout, and Kill Behavior",
+        "blocks": [
+          {"type": "code", "label": "背景啟動與監控", "code": "result = terminal(\n    command=\"codex exec --full-auto '$(cat /tmp/codex_prompt.md)'\",\n    workdir=WORKTREE,\n    background=True,\n    pty=True,\n    notify_on_complete=True,\n)\nsession_id = result[\"session_id\"]\nprocess(action=\"poll\", session_id=session_id)\nprocess(action=\"log\", session_id=session_id, limit=200)\nprocess(action=\"wait\", session_id=session_id, timeout=300)"},
+          {"type": "list", "items": ["超過兩分鐘的 lane，定期送 Kanban heartbeat。", "若 Codex 要求 secrets、production credentials 或 external permissions，立即 kill。", "若它修改 worktree 外檔案、做無關重寫、剩餘 runtime 不足或沒有有用輸出，也應 kill。", "kill 後檢查 `git status --short`，只保留安全且有用的 patch，並記錄 rejected/timed_out 原因。"]}
+        ]
+      },
+      {
+        "heading": "Reconciliation 與完成 metadata",
+        "source_heading": "Reconciliation Checklist / kanban_complete Metadata Schema",
+        "blocks": [
+          {"type": "checklist", "items": ["`git -C <WORKTREE> status --short --branch` 只顯示預期檔案。", "Hermes 已 review `diff --stat` 與 `git diff`。", "沒有 secrets、credentials、generated caches、無關資料或 local artifacts。", "安全約束仍保留。", "Codex commits 足夠小，可以 cherry-pick 或 squash。", "Hermes 以 repo canonical wrapper 重跑測試。", "Codex-run tests 與 Hermes-run tests 分開列。", "accepted diff 已套用到 Hermes-owned workspace/branch。", "rejected/partial work 有具體理由與 artifact path。"]},
+          {"type": "paragraph", "text": "`kanban_complete.metadata.codex_lane` 需描述 used、mode、worktree、branch、command、result、accepted_commits、rejected_reason、tests_run 與 artifacts。若跳過 Codex，也要用 `used: false` 和具體 skipped/rejected reason 交代。"}
+        ]
+      },
+      {
+        "heading": "常見陷阱與驗證清單",
+        "source_heading": "Common Pitfalls / Verification Checklist",
+        "blocks": [
+          {"type": "list", "items": ["把 Codex 自述當驗證。", "在使用者 dirty main checkout 裡跑 Codex。", "讓 Codex 擁有 Kanban lifecycle。", "忘記在 prompt 中放 safety invariants。", "快速 edits 卻使用 `/goal`。", "kill 後沒有記錄原因。", "因為 tests pass 就接受無關 cleanup。"]},
+          {"type": "checklist", "items": ["Codex 已檢查或明確 skipped。", "只在隔離 worktree/branch 跑。", "prompt 包含 scope、ownership、safety、verification commands。", "Hermes 已 review diff 與安全敏感檔案。", "Hermes 已獨立跑 canonical tests。", "`metadata.codex_lane` 符合 schema。", "臨時 process/worktree 已清理或記錄為 artifact。"]}
+        ]
       }
-    ],
-    "notes": [
-      "Kanban 狀態是事實來源；Codex 只是執行器。任何成功、失敗、阻塞都要回寫卡片。",
-      "不要讓 Codex 自行擴大範圍。prompt 要明確列出不應修改的區域。",
-      "若 Codex 產生不可信變更，worker 應停止並 block，而不是硬 merge。"
     ]
   },
   "autonomous-agent-workflows": {
     "title": "自主代理工作流",
-    "subtitle": "用 Hermes、Codex、Claude Code、OpenCode 等代理拆分任務、平行執行與驗收。",
+    "subtitle": "設定與委派 Hermes profiles、Kanban、Claude Code、Codex、OpenCode 等自主 coding agents 的 umbrella skill。",
     "category": "自主 AI 開發代理",
-    "tags": ["多代理", "Hermes", "Codex", "Claude Code", "工作流"],
-    "summary": "這個技能是一套多代理開發方法：先由主代理界定目標與完成定義，再把可獨立處理的子任務委派給其他代理或 CLI，最後由主代理整合、驗證、提交。它強調隔離、可觀測、可回復，而不是讓多個代理同時亂改同一個工作區。",
-    "use_when": [
-      "任務可以拆成多個互不衝突的子工作，例如前端、後端、測試、文件或調研。",
-      "需要快速探索多個方案，或讓一個代理實作、另一個代理 review。",
-      "需要長時間背景工作，但仍要主代理掌握狀態與最終品質。"
+    "tags": ["多代理", "Hermes", "Codex", "Claude Code", "OpenCode", "Kanban"],
+    "summary": "此頁依照 Autonomous Agent Workflows 的 source SKILL.md 翻譯：Overview、Decision Flow、External coding CLIs、OpenCode API lane/API mode、Hermes profiles and model providers、Multi-agent agency teams、支援檔與 Verification Checklist。",
+    "source_support_files": [
+      "references/ai-agency-team-setup/software-agency-roster.md",
+      "references/databricks-hermes-profiles/databricks-gpt-oss-structured-content.md",
+      "references/opencode-http-api.md"
     ],
-    "avoid_when": [
-      "任務很小，單一代理直接完成比較快。",
-      "變更高度耦合，平行實作會造成 merge 衝突。",
-      "沒有測試或驗收標準，代理結果無法可靠判斷。"
+    "source_outline_zh": [
+      "Overview：代理委派與 profile setup 的 umbrella。",
+      "Decision Flow：選擇短期 delegate_task、durable Kanban 或外部 agent CLI。",
+      "Lanes：External coding CLIs、OpenCode API lane/API mode、Hermes profiles/model providers、多代理 agency teams。",
+      "Support files：保留被吸收 skill 的參考檔。",
+      "Verification Checklist：確認 agent/profile/CLI、context、artifact、外部副作用與追蹤方式。"
     ],
-    "workflow": [
-      "定義成果：列出要交付的檔案、行為、測試與不做事項。",
-      "拆分任務：每個子任務都應有清楚輸入、輸出與邊界。",
-      "選擇執行方式：短任務可用 Hermes delegation；需要完整 CLI 能力時用 Codex/Claude Code/OpenCode。",
-      "隔離工作區：使用 branch、worktree 或獨立 repo clone，避免代理互踩。",
-      "收斂結果：讀取每個代理摘要，但以實際 diff、測試與檔案內容為準。",
-      "整合與驗證：主代理負責最後修整、跑測試、commit、PR 與回報。"
-    ],
-    "commands": [
+    "translated_sections": [
       {
-        "label": "Hermes 一次性子代理",
-        "command": "hermes chat -q \"請檢查這個 repo 的登入流程並寫出風險摘要。\""
+        "heading": "總覽",
+        "source_heading": "Overview",
+        "blocks": [
+          {"type": "paragraph", "text": "這是 agent delegation 與 profile setup 的 umbrella skill。當使用者要跑 coding agent、建立 AI software-agency team、設定 agent fleet 的模型/profile，或要在 Claude Code、Codex、OpenCode、Hermes subagents/Kanban 之間選擇時使用。"}
+        ]
       },
       {
-        "label": "使用 worktree 隔離平行開發",
-        "command": "git worktree add ../feature-a -b feat/feature-a"
+        "heading": "決策流程",
+        "source_heading": "Decision Flow",
+        "blocks": [
+          {"type": "steps", "items": ["先判斷工作是短期 reasoning（`delegate_task`）、durable cross-profile work（Kanban），還是 external agent CLI job。", "指派前驗證選定 CLI 或 profile 真的存在。", "傳入 self-contained context：repo path、goal、constraints、tests、branch/PR expectations、output contract。", "要求 child agents 回傳可驗證 handles：file paths、diffs、test output、PR URLs、run IDs。", "回報成功前，自己驗證 external side effects。"]}
+        ]
       },
       {
-        "label": "整合前檢查",
-        "command": "git diff --stat && git status --short"
+        "heading": "External coding CLIs lane",
+        "source_heading": "External coding CLIs",
+        "blocks": [
+          {"type": "paragraph", "text": "當使用者明確要求某個 agent，或 repo-local CLI workflow 是正確 execution substrate 時，才使用 Claude Code、Codex 或 OpenCode。執行方式要 bounded、inspectable，並保存輸出；變更必須用 git diff/tests 驗證。"}
+        ]
+      },
+      {
+        "heading": "OpenCode API lane / API mode",
+        "source_heading": "OpenCode API lane / OpenCode API mode",
+        "blocks": [
+          {"type": "paragraph", "text": "OpenCode 可不經 TUI，由 `opencode serve` 或 `npx -y opencode-ai serve` 啟動 HTTP/OpenAPI 服務；可用 `/doc`、`/global/health`、`/session`、`/session/{sessionID}/message` 等 endpoint。當 Hermes/Kanban integration 需要 resident server、session control、event/message polling 時，優先考慮這條 lane。"},
+          {"type": "paragraph", "text": "OpenCode 也可搭配 `@opencode-ai/sdk` 與 `opencode run --attach` 做程式化控制；如果 worker 需要 durable、可檢查的 OpenCode lane，這比單純 one-shot CLI 更合適。"}
+        ]
+      },
+      {
+        "heading": "Hermes profiles 與 model providers",
+        "source_heading": "Hermes profiles and model providers",
+        "blocks": [
+          {"type": "paragraph", "text": "profile setup、custom providers、Databricks Model Serving endpoints、per-profile model routing 都走這條 lane。完成設定後，要用 `hermes -p <profile> model` 或最小 profile run 驗證。"}
+        ]
+      },
+      {
+        "heading": "多代理 agency teams 與 profile handoff",
+        "source_heading": "Multi-agent agency teams",
+        "blocks": [
+          {"type": "paragraph", "text": "設計 team 時保持小而明確：先探索現有 profiles，再記錄 planning、implementation、review、research、operations 各由哪個 profile 負責。"},
+          {"type": "paragraph", "text": "當使用者要求把對話轉交給某個 team role/profile（例如 `pm`/Ava）時，應優先嘗試真實 profile/agent handoff：one-shot profile call、Kanban durable work，或短期 role-isolated `delegate_task`。聲稱 handoff 成功前，要確認 profile 能實際啟動；若 auth、rate limit 或設定阻塞，要明講並使用暫時 fallback，不可假裝 profile 已跑。"}
+        ]
+      },
+      {
+        "heading": "支援檔與驗證清單",
+        "source_heading": "Support files / Verification Checklist",
+        "blocks": [
+          {"type": "paragraph", "text": "source skill 指出 absorbed skills 可能帶有 AI agency roster、Databricks Hermes profiles、OpenCode HTTP API 等參考檔；頁尾列出本機來源目錄實際可找到的支援檔。"},
+          {"type": "checklist", "items": ["選定 agent/profile/CLI 存在且可啟動。", "prompt/context 是 self-contained。", "output contract 要求可驗證 artifacts。", "parent agent 獨立驗證 claimed changes。", "長時間工作使用 durable tracking，而不是未追蹤 shell process。"]}
+        ]
       }
-    ],
-    "notes": [
-      "多代理不是免審核。主代理仍要檢查每個結果是否符合需求。",
-      "任務描述要包含完成定義，否則代理會用自己的假設填空。",
-      "能用小步驗證就不要一次丟巨大任務；可觀測性比一次生成大量程式碼更重要。"
     ]
   },
   "kanban-operations": {
     "title": "Kanban Operations 看板操作總覽",
-    "subtitle": "操作 Hermes Kanban 時，用來拆任務、派工、追蹤 worker、重試卡片與排查 dispatcher 的總覽指南。",
+    "subtitle": "拆任務、派工、worker handoff、重試、dispatcher 除錯、復原與 operator workflows 的 Hermes Kanban 總覽。",
     "category": "多代理 Kanban 工作流",
-    "tags": ["Kanban", "Hermes", "Orchestrator", "Worker", "Operator", "任務隊列"],
+    "tags": ["Kanban", "Hermes", "Orchestrator", "Worker", "Operator", "Recovery"],
     "source_description_zh": "操作 Hermes Kanban 時使用：拆解工作、路由卡片、worker 交接、重試、派送除錯、復原，以及 dashboard/operator 日常流程。",
-    "summary": "用途：這個技能是 Hermes Kanban 的操作總覽，將 orchestrator lane、worker lane 與 operator lane 的責任分清楚。它不是把英文原文搬過來，而是把日常看板操作整理成手機上也容易閱讀的中文說明：如何拆卡、指派 profile、讓 worker 在正確工作區執行、用看板證據確認狀態，以及在卡住、逾時或需要重試時如何安全恢復。",
-    "use_when": [
-      "老闆或團隊要用 Hermes Kanban 拆分一批工作，並把不同卡片交給適合的 profile 或 worker。",
-      "需要判斷某張卡片到底是尚未派工、worker 沒啟動、模型停住、外部工具失敗、逾時，還是等待人工審核。",
-      "worker 完成或阻塞任務時，需要知道應該回寫哪些摘要、證據、artifact、測試結果與下一步。",
-      "operator 要重試、解除阻塞、查看 runs/logs，或確認 dispatcher 是否真的把卡片送出去。"
+    "summary": "此頁依照 Kanban Operations umbrella skill 的原始章節翻譯整理：Overview、Orchestrator lane、Worker lane、Operator lane、支援檔與 Verification Checklist。重點是用 board evidence 管理狀態，而不是靠猜測或口頭摘要。",
+    "source_support_files": ["references/kanban-orchestrator/dispatch-and-timeout-debugging.md", "references/kanban-worker/model-stall-diagnostics.md"],
+    "source_outline_zh": [
+      "Overview：統一 orchestrator、worker、operator knowledge。",
+      "Orchestrator lane：建立卡片前確認 profile、拆平行卡、只對真依賴使用 parent links。",
+      "Worker lane：讀卡片/留言/runs，在 `$HERMES_KANBAN_WORKSPACE` 工作，完成或阻塞時回寫 structured metadata。",
+      "Operator lane：以 list/show/runs/logs/dispatcher output 回答狀態與重試。",
+      "Verification Checklist：profile、依賴、metadata/artifacts、retry verification、completion evidence。"
     ],
-    "avoid_when": [
-      "只是單一 repo 的小修改，直接由目前代理完成會比建立 Kanban 卡片更快。",
-      "尚未知道可用 profile 或 worker 名稱；這時不要憑空指派，應先查 profile 或詢問。",
-      "任務需要立即人工產品決策，沒有清楚驗收條件，worker 無法獨立完成。"
-    ],
-    "workflow": [
-      "Orchestrator lane：先用 hermes profile list 或向使用者確認可用 profile，再把可平行處理的工作拆成獨立卡片；只有真的有依賴時才用 parent link，不要只在文字裡描述依賴。",
-      "Orchestrator lane：派工時寫清楚目標、範圍、驗收條件、禁止事項與建議驗證命令；身為 orchestrator 時不要自己偷做 worker 的實作，也不要發明不存在的 assignee。",
-      "Worker lane：接到卡片後，先讀卡片內容、先前留言與 run 紀錄，確認自己在 $HERMES_KANBAN_WORKSPACE 內工作；只有有實質進度時才 heartbeat。",
-      "Worker lane：完成時要回寫結構化摘要、實際驗證結果、commit/artifact 或檔案路徑；若需要人工審核或缺少資料，應 block 並寫明原因與需要誰處理。",
-      "Operator lane：回答卡片有沒有跑、為什麼卡住時，必須以 list、show、runs、logs 或 dispatcher 輸出為證據，不要只看卡片標題推測。",
-      "Operator lane：重試時先確認阻塞原因，必要時 unblock 並寫 reason，只 dispatch 一輪，然後再用 show 與 runs 驗證狀態是否真的改變。"
-    ],
-    "commands": [
+    "translated_sections": [
       {
-        "label": "查看可用 Hermes profiles",
-        "command": "hermes profile list"
+        "heading": "總覽",
+        "source_heading": "Overview",
+        "blocks": [
+          {"type": "paragraph", "text": "Kanban Operations 是 Hermes Kanban orchestrator、worker、operator 知識的 umbrella。當工作涉及 task decomposition、profile routing、card lifecycle、blocked/retry recovery、dispatcher debugging 或 worker handoff conventions 時載入。"}
+        ]
       },
       {
-        "label": "查看看板卡片列表",
-        "command": "hermes kanban list"
+        "heading": "Orchestrator lane",
+        "source_heading": "Orchestrator lane",
+        "blocks": [
+          {"type": "paragraph", "text": "建立卡片前，先用 `hermes profile list` 或詢問使用者來探索實際存在的 profiles。可平行的工作拆成獨立卡片；只有真正有依賴時才建立 parent links。"},
+          {"type": "checklist", "items": ["不要發明不存在的 assignee。", "acting as orchestrator 時不要自己偷做 implementation。", "卡片要寫清楚目標、範圍、驗收條件、禁止事項與建議驗證。", "支援檔：`references/kanban-orchestrator/dispatch-and-timeout-debugging.md`。"]},
+          {"type": "commands", "items": [
+            {"label": "查看可用 profiles", "command": "hermes profile list"},
+            {"label": "查看卡片列表", "command": "hermes kanban list"}
+          ]}
+        ]
       },
       {
-        "label": "查看單一卡片細節",
-        "command": "hermes kanban show <card-id>"
+        "heading": "Worker lane",
+        "source_heading": "Worker lane",
+        "blocks": [
+          {"type": "paragraph", "text": "Worker 接到卡片後，要先 orient on the card：讀卡片內容、先前 runs/comments，確認自己在 `$HERMES_KANBAN_WORKSPACE` 中工作。heartbeat 只用於有意義進度，不要當作假進度。"},
+          {"type": "list", "items": ["完成時回寫 structured metadata、artifact、測試輸出與必要檔案路徑。", "若重大程式變更需要人工 approval，使用 review-required blocking。", "缺少資料、權限或外部依賴時 block 並寫明原因。", "支援檔：`references/kanban-worker/model-stall-diagnostics.md`。"]},
+          {"type": "commands", "items": [
+            {"label": "Worker 確認工作區", "command": "pwd && echo \"$HERMES_KANBAN_WORKSPACE\" && git status --short"},
+            {"label": "查看單一卡片細節", "command": "hermes kanban show <card-id>"},
+            {"label": "查看執行紀錄", "command": "hermes kanban runs <card-id>"}
+          ]}
+        ]
       },
       {
-        "label": "查看卡片執行紀錄",
-        "command": "hermes kanban runs <card-id>"
+        "heading": "Operator lane",
+        "source_heading": "Operator lane",
+        "blocks": [
+          {"type": "paragraph", "text": "當被問到卡片是否有跑、為何卡住、能不能重試時，回答必須基於 board evidence：list、show、runs、logs 與 dispatcher output。要區分 task creation、worker spawn、model stall、external tool failure、timeout、human block。"},
+          {"type": "steps", "items": ["先用 `show` 與 `runs/logs` 確認阻塞原因。", "若需要重試，先 unblock 並留下 reason。", "只 dispatch 一輪。", "再用 show 與 runs 驗證狀態是否改變。"]},
+          {"type": "commands", "items": [
+            {"label": "查看 logs", "command": "hermes kanban logs <card-id>"},
+            {"label": "解除阻塞並留下原因", "command": "hermes kanban unblock <card-id> --reason \"補齊缺少資訊後重試\""},
+            {"label": "派送一輪", "command": "hermes kanban dispatch --once"}
+          ]}
+        ]
       },
       {
-        "label": "查看卡片或 worker logs",
-        "command": "hermes kanban logs <card-id>"
-      },
-      {
-        "label": "解除阻塞並留下原因",
-        "command": "hermes kanban unblock <card-id> --reason \"補齊缺少資訊後重試\""
-      },
-      {
-        "label": "派送一輪待處理卡片",
-        "command": "hermes kanban dispatch --once"
-      },
-      {
-        "label": "Worker 確認工作區",
-        "command": "pwd && echo \"$HERMES_KANBAN_WORKSPACE\" && git status --short"
+        "heading": "驗證清單",
+        "source_heading": "Verification Checklist",
+        "blocks": [
+          {"type": "checklist", "items": ["指派前已確認 profiles 存在。", "依賴用 parent links 表示，而不是只寫在 prose。", "Worker summaries 包含 structured metadata 與 artifacts。", "Retry/recovery actions 已用 `show` + `runs` 驗證。", "任務完成聲明有 board state、comments 或 artifacts 支撐。"]}
+        ]
       }
-    ],
-    "notes": [
-      "驗證清單：指派前已確認 profile 存在，沒有憑空假設 assignee。",
-      "驗證清單：真正的依賴已用 parent link 表示，而不是只寫在描述文字裡。",
-      "驗證清單：worker 完成、阻塞或重試後，都有用 show 與 runs/logs 交叉確認。",
-      "驗證清單：完成聲明有看板狀態、留言、artifact、commit 或測試輸出支撐。",
-      "注意事項：Kanban board 是狀態事實來源；worker 或其他代理的口頭摘要只能當線索。",
-      "注意事項：重試前先分辨是派送、啟動、模型、工具、逾時或人工審核問題，避免盲目連續 dispatch。",
-      "注意事項：大量卡片平行執行時，優先隔離 workspace、branch 或 repo clone，避免 worker 互相覆蓋。"
     ]
   },
   "hermes-agent": {
     "title": "Hermes Agent",
-    "subtitle": "終端機、訊息平台與 IDE 可用的開源 AI 代理框架。",
+    "subtitle": "終端機、訊息平台與 IDE 可用的開源 AI agent framework；支援 tools、skills、memory、profiles、gateway、MCP 與排程。",
     "category": "Hermes 平台與設定",
     "tags": ["Hermes", "CLI", "Profiles", "Skills", "MCP", "Gateway"],
-    "summary": "Hermes Agent 是 Nous Research 的開源 AI 代理框架。它可以在終端機、通訊平台與 IDE 中使用，透過工具呼叫操作檔案、執行命令、搜尋資料、管理記憶與技能。這份中文整理著重在日常使用與設定：profile、skills、tools、MCP、gateway、cron、memory，以及遇到問題時的排查方向。",
-    "use_when": [
-      "需要設定 Hermes CLI、模型、provider、tools、skills 或 profile。",
-      "要把 Hermes 接到 Telegram、Discord、Slack、Webhook、MCP server 或排程工作。",
-      "要了解 Hermes 如何保存記憶、載入技能、委派子代理，或如何擴充工具。"
+    "summary": "此頁以 Hermes Agent skill 為準，將原始長篇 skill 分成繁中可讀章節：定位與差異化、Quick Start、CLI reference、slash commands、paths/config、providers、toolsets、安全與隱私、voice、spawning、durable systems、troubleshooting、where to find things、contributor quick reference。官方文件仍是最新權威來源。",
+    "source_outline_zh": [
+      "Hermes Agent：開源 AI agent framework，支援 terminal、messaging platforms、IDEs。",
+      "Quick Start：install、chat、single query、setup、model、doctor。",
+      "CLI Reference：global flags、chat、configuration、tools/skills、MCP、gateway、sessions、cron、webhooks、profiles、credential pools。",
+      "Slash Commands：session、config、tools/skills、gateway、utility、info、exit。",
+      "Key Paths & Config：config、env、skills、sessions、state.db、logs、auth、profiles。",
+      "Providers / Toolsets：多 provider 與 toolset enable/disable。",
+      "Security & Privacy Toggles：secret redaction、PII redaction、approvals、allowlist、tool disabling。",
+      "Voice & Transcription：STT/TTS providers 與 `/voice`。",
+      "Spawning Additional Hermes Instances：delegate_task vs process、one-shot、tmux、resume。",
+      "Durable & Background Systems：delegation、cron、curator、kanban。",
+      "Windows-Specific Quirks、Troubleshooting、Where to Find Things、Contributor Quick Reference。"
     ],
-    "avoid_when": [
-      "只是一般 repo 程式碼問題，且不涉及 Hermes 本身設定或平台能力。",
-      "需要最新權威資訊但本機 skill 可能過期；這時應優先查官方文件。"
-    ],
-    "workflow": [
-      "先確認 profile：不同 profile 有獨立 config、skills、sessions 與 memory。",
-      "檢查狀態：用 hermes doctor、hermes status、hermes config path 找設定與依賴問題。",
-      "設定模型與認證：用 hermes model 或 hermes auth add 管理 provider 與 credential。",
-      "管理工具與技能：用 hermes tools list、hermes skills list、hermes skills install 檢查可用能力。",
-      "整合外部系統：MCP 用 hermes mcp add/list/test；gateway 用 hermes gateway setup/run/install。",
-      "變更後重啟或 reset：工具、技能與部分設定通常要新 session 或 gateway restart 才生效。"
-    ],
-    "commands": [
+    "translated_sections": [
       {
-        "label": "健康檢查",
-        "command": "hermes doctor"
+        "heading": "定位與差異化",
+        "source_heading": "Hermes Agent",
+        "blocks": [
+          {"type": "paragraph", "text": "Hermes Agent 是 Nous Research 的開源 AI agent framework，可在 terminal、messaging platforms、IDEs 中執行。它和 Claude Code、Codex、OpenClaw 同屬 autonomous coding/task-execution agents，透過 tool calling 操作系統。Hermes 支援 OpenRouter、Anthropic、OpenAI、DeepSeek、本地模型等多種 provider，並可在 Linux、macOS、WSL 執行。"},
+          {"type": "list", "items": ["透過 skills 自我改善：把成功流程、被修正的做法與可重用程序存成 skill。", "跨 session persistent memory：保存偏好、環境與 lessons learned，可用不同 memory backends。", "Multi-platform gateway：同一 agent 可跑在 Telegram、Discord、Slack、WhatsApp、Signal、Matrix、Email 等平台。", "Provider-agnostic：可切換 model/provider，credential pools 可輪替多把 API keys。", "Profiles：多個 Hermes instance 有獨立 configs、sessions、skills、memory。", "Extensible：plugins、MCP servers、custom tools、webhooks、cron、Python ecosystem。"]},
+          {"type": "callout", "title": "權威文件", "text": "最新資訊以官方 docs 為準：https://hermes-agent.nousresearch.com/docs/"}
+        ]
       },
       {
-        "label": "查看目前設定檔路徑",
-        "command": "hermes config path"
+        "heading": "Quick Start",
+        "source_heading": "Quick Start",
+        "blocks": [
+          {"type": "commands", "items": [
+            {"label": "安裝", "command": "curl -fsSL https://raw.githubusercontent.com/NousResearch/hermes-agent/main/scripts/install.sh | bash"},
+            {"label": "互動 chat（預設）", "command": "hermes"},
+            {"label": "單次查詢", "command": "hermes chat -q \"What is the capital of France?\""},
+            {"label": "設定 wizard / model / health", "command": "hermes setup\nhermes model\nhermes doctor"}
+          ]}
+        ]
       },
       {
-        "label": "切換或設定模型",
-        "command": "hermes model"
+        "heading": "CLI Reference：常用命令族",
+        "source_heading": "CLI Reference",
+        "blocks": [
+          {"type": "table", "rows": [
+            {"分類": "Global flags", "重點": "`--resume`、`--continue`、`--worktree`、`--skills`、`--profile`、`--yolo`。"},
+            {"分類": "Chat", "重點": "`hermes chat -q`、指定 model/provider/toolsets、verbose/quiet、checkpoints。"},
+            {"分類": "Configuration", "重點": "`setup`、`model`、`config set/edit/path/check/migrate`、`auth`、`doctor`、`status`。"},
+            {"分類": "Tools & Skills", "重點": "`hermes tools list/enable/disable`；`hermes skills list/search/install/inspect/check/update`。"},
+            {"分類": "MCP", "重點": "`mcp serve/add/remove/list/test/configure`。"},
+            {"分類": "Gateway", "重點": "`gateway run/install/start/stop/restart/status/setup`。"},
+            {"分類": "Sessions / Cron / Webhooks", "重點": "sessions 管理、cron create/edit/run、webhook subscribe/list/test。"},
+            {"分類": "Profiles / Credential Pools", "重點": "profile list/create/use/show/export/import；auth list/remove/reset。"}
+          ]}
+        ]
       },
       {
-        "label": "列出工具與技能",
-        "command": "hermes tools list && hermes skills list"
+        "heading": "Slash Commands",
+        "source_heading": "Slash Commands (In-Session)",
+        "blocks": [
+          {"type": "paragraph", "text": "互動 session 中可用 slash commands。新命令常更新；若內容疑似過期，使用 `/help` 或官方 slash command reference。source skill 指出 registry of record 是 `hermes_cli/commands.py`。"},
+          {"type": "list", "items": ["Session control：`/new`、`/clear`、`/retry`、`/rollback`、`/background`、`/queue`、`/steer`、`/agents`、`/goal`。", "Configuration：`/config`、`/model`、`/personality`、`/reasoning`、`/voice`、`/yolo`、`/skin`。", "Tools/Skills：`/tools`、`/toolsets`、`/skills`、`/skill`、`/reload-skills`、`/reload-mcp`、`/cron`、`/kanban`。", "Gateway：`/approve`、`/deny`、`/restart`、`/sethome`、`/platforms`。", "Utility/Info/Exit：`/branch`、`/history`、`/save`、`/image`、`/help`、`/usage`、`/profile`、`/debug`、`/quit`。"]}
+        ]
       },
       {
-        "label": "測試 MCP server",
-        "command": "hermes mcp list && hermes mcp test <name>"
+        "heading": "主要路徑與設定",
+        "source_heading": "Key Paths & Config / Config Sections",
+        "blocks": [
+          {"type": "table", "rows": [
+            {"路徑": "`~/.hermes/config.yaml`", "用途": "主要設定。"},
+            {"路徑": "`~/.hermes/.env`", "用途": "API keys 與 secrets。"},
+            {"路徑": "`$HERMES_HOME/skills/`", "用途": "已安裝 skills。"},
+            {"路徑": "`~/.hermes/state.db`", "用途": "Canonical session store（SQLite + FTS5）。"},
+            {"路徑": "`~/.hermes/logs/`", "用途": "Gateway 與 error logs。"},
+            {"路徑": "`~/.hermes/auth.json`", "用途": "OAuth tokens 與 credential pools。"},
+            {"路徑": "`~/.hermes/profiles/<name>/`", "用途": "Profile 隔離 layout。"}
+          ]},
+          {"type": "paragraph", "text": "設定可用 `hermes config edit` 或 `hermes config set section.key value`。重要 sections 包含 model、agent、terminal、compression、display、stt、tts、memory、security、delegation、checkpoints。"}
+        ]
+      },
+      {
+        "heading": "Providers 與 Toolsets",
+        "source_heading": "Providers / Toolsets",
+        "blocks": [
+          {"type": "paragraph", "text": "Hermes 支援 20+ providers。常見包含 OpenRouter、Anthropic、Nous Portal、OpenAI Codex、GitHub Copilot、Google Gemini、DeepSeek、xAI/Grok、Hugging Face、Z.AI/GLM、MiniMax、Kimi、DashScope、Qwen OAuth、自訂 endpoint 等。"},
+          {"type": "paragraph", "text": "Toolsets 透過 `hermes tools` 啟用/停用；常見 toolsets 包含 web/search/browser/terminal/file/code_execution/vision/image_gen/video/tts/skills/memory/session_search/delegation/cronjob/clarify/messaging/todo/kanban/debugging/safe 等。變更通常要 `/reset` 或新 session 才生效。"}
+        ]
+      },
+      {
+        "heading": "安全與隱私切換",
+        "source_heading": "Security & Privacy Toggles",
+        "blocks": [
+          {"type": "list", "items": ["Secret redaction 預設開啟：`hermes config set security.redact_secrets true`。若要關閉通常需新 session，且只應在 redactor/debug 情境使用。", "Gateway PII redaction：`hermes config set privacy.redact_pii true|false`。", "Command approvals：`approvals.mode` 可為 manual、smart、off；`--yolo` 是 per-invocation bypass。", "Shell hooks allowlist 由 `~/.hermes/shell-hooks-allowlist.json` 管理。", "若要避免 web/browser/image-gen，透過 `hermes tools` 對 platform 關閉，下一 session 生效。"]}
+        ]
+      },
+      {
+        "heading": "Voice、Spawning 與 Durable Systems",
+        "source_heading": "Voice & Transcription / Spawning Additional Hermes Instances / Durable & Background Systems",
+        "blocks": [
+          {"type": "paragraph", "text": "STT provider 偵測順序包含 local faster-whisper、Groq Whisper、OpenAI Whisper、Mistral Voxtral；TTS provider 包含 Edge TTS、ElevenLabs、OpenAI、MiniMax、Mistral、NeuTTS。互動中用 `/voice on|tts|off`。"},
+          {"type": "paragraph", "text": "額外 Hermes instances 可用 one-shot `hermes chat -q` 或 tmux interactive PTY。短期子任務偏向 `delegate_task`；長期或完全獨立 process 可 spawn Hermes，搭配 `-w` worktree mode 降低 git conflict。"},
+          {"type": "list", "items": ["Delegation：同步 child agent spawn，不 durable。", "Cron：durable scheduler，支援 duration、every phrase、cron、ISO timestamp。", "Curator：背景 skill lifecycle 維護，只 archive、不硬刪。", "Kanban：SQLite board，dispatcher claims tasks 並 spawn assigned profiles。"]}
+        ]
+      },
+      {
+        "heading": "Troubleshooting 與去哪裡找資料",
+        "source_heading": "Troubleshooting / Where to Find Things",
+        "blocks": [
+          {"type": "list", "items": ["Voice 不動：檢查 `stt.enabled`、provider dependencies/API key、gateway restart。", "Tool 不存在：檢查 `hermes tools`、環境變數，啟用後 `/reset`。", "Model/provider 問題：跑 `hermes doctor`、重新 `hermes auth`、檢查 `.env`。", "變更未生效：tools/skills 需要 `/reset`，gateway 需要 `/restart`，code change 需重啟 CLI/gateway。", "Skills 不顯示：`hermes skills list`、`hermes skills config`、或顯式 `/skill name`。", "Gateway 問題：先查 `~/.hermes/logs/gateway.log`。"]},
+          {"type": "table", "rows": [
+            {"要找": "Config options", "位置": "`hermes config edit` 或官方 Configuration docs。"},
+            {"要找": "Available tools", "位置": "`hermes tools list` 或 Tools reference。"},
+            {"要找": "Slash commands", "位置": "`/help` 或 Slash commands reference。"},
+            {"要找": "Providers", "位置": "`hermes model` 或 Providers guide。"},
+            {"要找": "Gateway logs", "位置": "`~/.hermes/logs/gateway.log`。"},
+            {"要找": "Source code", "位置": "`~/.hermes/hermes-agent/`。"}
+          ]}
+        ]
+      },
+      {
+        "heading": "Contributor quick reference",
+        "source_heading": "Contributor Quick Reference",
+        "blocks": [
+          {"type": "paragraph", "text": "Source skill 提供偶爾 contributor/PR author 的開發速查：主要檔案包含 `run_agent.py`、`model_tools.py`、`toolsets.py`、`cli.py`、`hermes_state.py`、`agent/`、`hermes_cli/`、`tools/`、`gateway/`、`cron/`、`tests/`、`website/`。"},
+          {"type": "list", "items": ["新增 tool 通常涉及 `tools/your_tool.py` 與 `toolsets.py`，並使用 registry.register。", "新增 slash command：在 `hermes_cli/commands.py` 加 CommandDef，並補 CLI/gateway handler。", "測試：`python -m pytest tests/ -o 'addopts=' -q` 或針對特定 area。", "Commit conventions：`fix:`、`feat:`、`refactor:`、`docs:`、`chore:`。", "關鍵規則：不要破壞 prompt caching、維持 message role alternation、路徑使用 `get_hermes_home()`、secrets 放 `.env`、tools 要有 check_fn。"]}
+        ]
       }
-    ],
-    "notes": [
-      "官方文件 https://hermes-agent.nousresearch.com/docs 是最新權威來源；本機 skill 是常用流程摘要。",
-      "profile 很重要。dev、default、pm 等 profile 的資料夾不同，不要誤改別的 profile。",
-      "工具變更通常不會套用到已存在的對話，開新 session 或 reset 才能看到差異。"
     ]
   }
 }
