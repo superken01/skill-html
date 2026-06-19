@@ -9,9 +9,9 @@ Hermes skills 的繁體中文靜態 HTML 說明站。
 - `assets/style.css`：手機友善 responsive 樣式，含深色模式。
 - `assets/app.js`：手機選單、首頁搜尋、深色/淺色手動切換。
 
-## 內容策略
+## 維護者內容整理說明
 
-`SKILL.md` 是內容事實來源。HTML 的目標是「忠實翻譯 + 好讀排版」，不是自由重寫，也不是只做摘要。
+`SKILL.md` 是內容事實來源。維護者整理 `data/skills_zh.json` 時，應讓繁體中文內容貼近來源並容易閱讀；這段是 repo 內部維護說明，不會產生到公開 HTML。
 
 每個 skill page 應儘量保留來源 `SKILL.md` 的主要結構與資訊型態：
 
@@ -105,4 +105,4 @@ Hermes skills 的繁體中文靜態 HTML 說明站。
     python3 -m py_compile scripts/update_skill_html.py scripts/validate_site.py
     git status --short
 
-`validate_site.py` 會檢查必要 HTML/CSS/JS 是否存在、HTML 是否宣告 `zh-Hant`、是否有 responsive viewport、站內連結是否指向存在的檔案、skill page 是否標示內容策略，以及 dark mode CSS/JS 是否存在。
+`validate_site.py` 會檢查必要 HTML/CSS/JS 是否存在、HTML 是否宣告 `zh-Hant`、是否有 responsive viewport、站內連結是否指向存在的檔案、首頁搜尋/技能列表、skill page 基本內容、公開 HTML 不含站台策略標語，以及 dark mode CSS/JS 是否存在。

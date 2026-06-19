@@ -70,10 +70,23 @@ def main() -> int:
             errors.append(f"{path.relative_to(ROOT)} missing responsive viewport meta")
         if "繁體中文" not in text:
             errors.append(f"{path.relative_to(ROOT)} does not look localized")
-        if path.name != "index.html" and "內容策略：忠實翻譯 + 好讀排版" not in text:
-            errors.append(f"{path.relative_to(ROOT)} missing content fidelity policy")
+        banned_public_text = ["內容策略", "忠實翻譯 + 好讀排版"]
+        for banned in banned_public_text:
+            if banned in text:
+                errors.append(f"{path.relative_to(ROOT)} exposes removed strategy text: {banned}")
+        if "content-policy" in text:
+            errors.append(f"{path.relative_to(ROOT)} still contains content-policy markup")
         if "theme-toggle" not in text:
             errors.append(f"{path.relative_to(ROOT)} missing dark mode toggle")
+        if "site-nav" not in text:
+            errors.append(f"{path.relative_to(ROOT)} missing site navigation")
+        if path.name == "index.html":
+            if "skill-list" not in text or "skill-search" not in text:
+                errors.append("index.html missing search or skill list")
+        else:
+            for required_text in ["來源資訊", "來源章節對照", "支援檔資訊"]:
+                if required_text not in text:
+                    errors.append(f"{path.relative_to(ROOT)} missing basic skill content: {required_text}")
         for link in parser.links:
             target = local_path(link, path)
             if target is not None and not target.exists():
