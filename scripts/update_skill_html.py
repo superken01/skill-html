@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
 """Render Traditional Chinese Hermes skill pages as static HTML.
 
-Content policy: SKILL.md is the source of truth. The JSON data supplies a
-Traditional Chinese translation/reading layer that preserves the source skill's
-major structure instead of replacing it with a loose summary.
+The JSON data supplies Traditional Chinese content that follows the source
+skill's major structure while keeping the static site readable.
 """
 from __future__ import annotations
 
@@ -282,11 +281,6 @@ def render_skill_page(slug: str, data: dict[str, Any], source: SourceSkill) -> s
     </section>
 
     <section class="content-grid">
-      <article class="panel span-2 content-policy">
-        <h2>內容策略：忠實翻譯 + 好讀排版</h2>
-        <p>{render_text(data.get('summary', '此頁以來源 SKILL.md 為準，保留主要結構並翻譯成好讀的繁體中文。'))}</p>
-        <p class="muted">本頁不是自由重寫或摘要；每個主要章節都對應來源 SKILL.md 的章節、清單、命令、檢查表或支援檔資訊。</p>
-      </article>
       <aside class="panel source-card">
         <h2>來源資訊</h2>
         <dl>
@@ -328,7 +322,7 @@ def render_index(skills: list[tuple[str, dict[str, Any], SourceSkill]]) -> str:
     body = f"""    <section class="hero">
       <p class="eyebrow">Hermes Skills 繁體中文導覽</p>
       <h1>技能說明 HTML 站</h1>
-      <p class="subtitle">以來源 <code>SKILL.md</code> 為準，保留主要章節、清單、命令、檢查表與支援檔資訊，翻譯整理成好讀的繁體中文。支援系統深色模式，也可手動切換並記住偏好。</p>
+      <p class="subtitle">整理 Hermes Skills 的繁體中文頁面，提供技能搜尋、站內導覽與深色模式切換。</p>
       <label class="search-box" for="skill-search">搜尋技能</label>
       <input id="skill-search" type="search" placeholder="輸入 Codex、Kanban、Hermes、代理..." autocomplete="off">
     </section>
