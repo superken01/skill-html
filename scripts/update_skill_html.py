@@ -24,7 +24,7 @@ SKILL_ROOTS = [
     Path("/Users/super/.hermes/profiles/dev/skills"),
 ]
 
-DEFAULT_SKILLS = ["codex", "kanban-codex-lane", "kanban-operations", "autonomous-agent-workflows", "hermes-agent"]
+DEFAULT_SKILLS = ["codex", "kanban-codex-lane", "kanban-operations", "autonomous-agent-workflows", "hermes-agent", "obsidian"]
 
 
 @dataclass
@@ -226,6 +226,7 @@ def page_shell(title: str, body: str, description: str = "", in_skill_dir: bool 
       <a href="{skills_root}kanban-operations.html">Kanban Operations</a>
       <a href="{skills_root}autonomous-agent-workflows.html">自主代理</a>
       <a href="{skills_root}hermes-agent.html">Hermes Agent</a>
+      <a href="{skills_root}obsidian.html">Obsidian</a>
     </nav>
   </header>
   <main>
@@ -324,7 +325,7 @@ def render_index(skills: list[tuple[str, dict[str, Any], SourceSkill]]) -> str:
       <h1>技能說明 HTML 站</h1>
       <p class="subtitle">整理 Hermes Skills 的繁體中文頁面，提供技能搜尋、站內導覽與深色模式切換。</p>
       <label class="search-box" for="skill-search">搜尋技能</label>
-      <input id="skill-search" type="search" placeholder="輸入 Codex、Kanban、Hermes、代理..." autocomplete="off">
+      <input id="skill-search" type="search" placeholder="輸入 Codex、Kanban、Hermes、Obsidian..." autocomplete="off">
     </section>
 
     <section class="skill-list" aria-label="技能列表">
