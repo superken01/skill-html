@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="此頁依照 Obsidian Vault skill 的原始 SKILL.md 翻譯整理：保留 vault path 慣例、讀取筆記、列出筆記、搜尋、建立筆記、追加內容、精準編輯與 wikilinks。">
+  <title>Obsidian Vault 筆記技能｜Skill HTML</title>
+  <link rel="stylesheet" href="../assets/style.css">
+  <script src="../assets/app.js" defer></script>
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="../index.html">Skill HTML</a>
+    <button class="theme-toggle" type="button" aria-label="切換深色模式" aria-pressed="false">深色</button>
+    <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav">選單</button>
+    <nav id="site-nav" class="site-nav">
+      <a href="../index.html">首頁</a>
+      <a href="codex.html">Codex</a>
+      <a href="kanban-codex-lane.html">Kanban Codex Lane</a>
+      <a href="kanban-operations.html">Kanban Operations</a>
+      <a href="autonomous-agent-workflows.html">自主代理</a>
+      <a href="hermes-agent.html">Hermes Agent</a>
+      <a href="obsidian.html">Obsidian</a>
+    </nav>
+  </header>
+  <main>
+    <section class="hero skill-hero">
+      <p class="eyebrow">筆記與知識庫</p>
+      <h1>Obsidian Vault 筆記技能</h1>
+      <p class="subtitle">用檔案系統優先的方式讀取、搜尋、建立與編輯 Obsidian vault 裡的 Markdown 筆記。</p>
+      <div class="tags"><span>Obsidian</span><span>Vault</span><span>Markdown</span><span>筆記</span><span>知識庫</span></div>
+    </section>
+
+    <section class="content-grid">
+      <aside class="panel source-card">
+        <h2>來源資訊</h2>
+        <dl>
+          <dt>Skill slug</dt><dd>obsidian</dd>
+          <dt>來源路徑</dt><dd>/Users/super/.hermes/hermes-agent/skills/note-taking/obsidian/SKILL.md</dd>
+          <dt>來源描述</dt><dd>Read, search, create, and edit notes in the Obsidian vault.</dd>
+          <dt>版本</dt><dd>未標示</dd>
+        </dl>
+      </aside>
+      <article class="panel">
+        <h2>來源章節對照</h2>
+        <ul><li>Obsidian Vault：以檔案系統為主的 Obsidian vault 操作技能。</li><li>Vault path：先解析具體 vault 路徑；優先使用 OBSIDIAN_VAULT_PATH，否則 fallback 到 ~/Documents/Obsidian Vault。</li><li>Read a note：用 read_file 讀取筆記，保留行號與分頁。</li><li>List notes：用 search_files target=files 列 Markdown 筆記。</li><li>Search：用 search_files 搜尋檔名或內容。</li><li>Create a note：用 write_file 建立完整 Markdown 筆記。</li><li>Append to a note：優先 read_file + patch/write_file；沒有穩定 anchor 時才考慮 terminal。</li><li>Targeted edits：用 patch 做聚焦修改。</li><li>Wikilinks：使用 [[Note Name]] 連結相關筆記。</li></ul>
+      </article>
+      <article class="panel span-2 translated-section"><div class="section-number">01</div><h2>用途與工作方式</h2><p class="source-heading">對應來源章節：Obsidian Vault</p><p>這個 skill 用於以檔案系統優先的方式操作 Obsidian vault：讀取筆記、列出筆記、搜尋 Markdown 檔、建立筆記、追加內容，以及加入 Obsidian wikilinks。</p><aside class="callout"><strong>核心原則</strong><p>先解析出具體 vault 絕對路徑，再使用 Hermes 的 file tools。不要把含有 $OBSIDIAN_VAULT_PATH 的字串直接傳給 read_file、write_file、patch 或 search_files。</p></aside></article><article class="panel span-2 translated-section"><div class="section-number">02</div><h2>Vault path 路徑慣例</h2><p class="source-heading">對應來源章節：Vault path</p><p>在呼叫檔案工具前，必須先知道或解析 vault path。文件化的慣例是使用環境變數 <code>OBSIDIAN_VAULT_PATH</code>，例如放在 <code>${HERMES_HOME:-~/.hermes}/.env</code>。若沒有設定，fallback 是 <code>~/Documents/Obsidian Vault</code>。</p><ul><li>檔案工具不會展開 shell 變數，所以不要把 <code>$OBSIDIAN_VAULT_PATH</code> 直接當路徑傳入。</li><li>Vault path 可能包含空白，因此解析出絕對路徑後，優先使用 read_file / write_file / patch / search_files，而不是 shell 指令。</li><li>如果 vault path 不明，可以先用 terminal 解析環境變數或檢查 fallback path 是否存在；一旦路徑確定，就切回檔案工具。</li></ul><div class="code-block"><h3>本機建議設定</h3><pre><code>OBSIDIAN_VAULT_PATH=&quot;/Users/super/Library/Mobile Documents/iCloud~md~obsidian/Documents/Hermes&quot;</code></pre></div></article><article class="panel span-2 translated-section"><div class="section-number">03</div><h2>讀取與列出筆記</h2><p class="source-heading">對應來源章節：Read a note / List notes</p><p>讀取單一筆記時，使用 <code>read_file</code> 搭配已解析的絕對路徑。這比 <code>cat</code> 更適合，因為會提供行號與分頁。</p><div class="commands"><article class="command-card"><h3>讀取筆記</h3><pre><code>read_file(path=&quot;/absolute/path/to/vault/Note.md&quot;)</code></pre></article><article class="command-card"><h3>列出所有 Markdown 筆記</h3><pre><code>search_files(pattern=&quot;*.md&quot;, target=&quot;files&quot;, path=&quot;/absolute/path/to/vault&quot;)</code></pre></article><article class="command-card"><h3>列出子資料夾筆記</h3><pre><code>search_files(pattern=&quot;*.md&quot;, target=&quot;files&quot;, path=&quot;/absolute/path/to/vault/Subfolder&quot;)</code></pre></article></div></article><article class="panel span-2 translated-section"><div class="section-number">04</div><h2>搜尋筆記</h2><p class="source-heading">對應來源章節：Search</p><p>檔名搜尋與內容搜尋都使用 <code>search_files</code>。來源 skill 明確建議用它取代 grep、find 或 ls。</p><div class="commands"><article class="command-card"><h3>依檔名搜尋</h3><pre><code>search_files(pattern=&quot;*project*.md&quot;, target=&quot;files&quot;, path=&quot;/absolute/path/to/vault&quot;)</code></pre></article><article class="command-card"><h3>搜尋 Markdown 內容</h3><pre><code>search_files(pattern=&quot;關鍵字或 regex&quot;, target=&quot;content&quot;, path=&quot;/absolute/path/to/vault&quot;, file_glob=&quot;*.md&quot;)</code></pre></article></div></article><article class="panel span-2 translated-section"><div class="section-number">05</div><h2>建立筆記</h2><p class="source-heading">對應來源章節：Create a note</p><p>建立筆記時，使用 <code>write_file</code> 傳入解析後的絕對路徑與完整 Markdown 內容。這比 shell heredoc 或 echo 更安全，能避免 shell quoting 問題，也會回傳結構化結果。</p><div class="code-block"><h3>建立 Markdown 筆記範例</h3><pre><code>write_file(
+  path=&quot;/absolute/path/to/vault/Project.md&quot;,
+  content=&quot;# Project\n\n- 相關：[[Another Note]]\n&quot;
+)</code></pre></div></article><article class="panel span-2 translated-section"><div class="section-number">06</div><h2>追加內容與精準編輯</h2><p class="source-heading">對應來源章節：Append to a note / Targeted edits</p><ol><li>優先讀取目標筆記：<code>read_file</code>。</li><li>若有穩定 anchor，例如既有標題或固定尾端區塊，用 <code>patch</code> 把 anchor 替換成 anchor + 新內容。</li><li>如果整份重寫比脆弱 patch 更清楚，可以用 <code>write_file</code> 重寫完整筆記。</li><li>若只是沒有穩定上下文的簡單 append，且 file-tool workflow 太彆扭，才考慮用 terminal。</li></ol><p>針對局部內容修改時，用 <code>patch</code> 做 focused edit，避免用 shell 文字改寫。</p></article><article class="panel span-2 translated-section"><div class="section-number">07</div><h2>Obsidian Wikilinks</h2><p class="source-heading">對應來源章節：Wikilinks</p><p>Obsidian 使用 <code>[[Note Name]]</code> 語法連結筆記。建立新筆記時，應用 wikilinks 連到相關主題，讓 vault 可以形成可瀏覽的知識網。</p><div class="code-block"><h3>Wikilink 範例</h3><pre><code># Hermes Notes
+
+相關：[[Project Decisions]]、[[Daily Log]]
+</code></pre></div></article>
+      <article class="panel span-2 support-files">
+        <h2>支援檔資訊</h2>
+        <p class="muted">這些是來源 skill 目錄中 `SKILL.md` 以外的檔案；HTML 只列出檔名與用途提示，不直接貼整份英文內容。</p>
+        <p class="muted">來源 skill 沒有額外支援檔，或本機未找到。</p>
+      </article>
+    </section>
+
+  </main>
+  <footer class="site-footer">
+    <p>繁體中文整理版。由 scripts/update_skill_html.py 產生</p>
+  </footer>
+</body>
+</html>

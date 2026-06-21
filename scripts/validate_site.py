@@ -14,6 +14,7 @@ REQUIRED = [
     ROOT / "skills" / "autonomous-agent-workflows.html",
     ROOT / "skills" / "kanban-operations.html",
     ROOT / "skills" / "hermes-agent.html",
+    ROOT / "skills" / "obsidian.html",
     ROOT / "assets" / "style.css",
     ROOT / "assets" / "app.js",
 ]
